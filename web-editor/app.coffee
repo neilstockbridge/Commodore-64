@@ -153,7 +153,7 @@ class Editor
     # the element as "e03" for row 0, column 3
     [ row, column] = @coordinates_from  event
     # The brush should be the opposite of the pixel currently underneath the cursor
-    brush = 1 - character_set.selected_character().pixel_at( row, column)
+    @brush = 1 - character_set.selected_character().pixel_at( row, column)
     # If the pixel is cleared ( transparent, background color) then go in to
     # "set" mode for setting pixels until the mouse button is released
     $('#editor').find('td').on 'mousemove', @when_dragged
