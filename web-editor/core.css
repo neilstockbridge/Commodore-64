@@ -1,0 +1,71 @@
+
+html * {
+  border: none;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  padding: 1em;
+}
+
+h1 { margin-bottom: 0.5em }
+
+p { margin-bottom: 1em }
+
+input[type=button] {
+  padding: 0.4em 0.5em;
+  border-radius: 0.2em;
+  box-shadow: 0 0 0.4em -0.2em;
+  background: linear-gradient( -5deg, #448, #559 );
+  color: #76c;
+  font-weight: bold;
+}
+
+input[type=button]:hover {
+  box-shadow: 0 0 0.4em 0em;
+  background: linear-gradient( -5deg, #448, #66a );
+  color: #98e;
+}
+
+#editor, #charset {
+  display: inline-block;
+  vertical-align: top;
+  border-collapse: collapse;
+}
+
+#editor td, #charset td {
+  border: 1px solid black;
+  width: 16px;
+  height: 16px;
+}
+
+#editor td:hover, #charset td:hover {
+  border-color: #ccc;
+}
+
+#buttons { margin-top: 0.5em }
+
+#upload_dialog, #download_dialog {
+  position: absolute; top: 10%; left: 50%;
+  display: none;
+  z-index: 9;
+}
+
+#upload_dialog >div, #download_dialog >div {
+  margin-left: -50%;
+  margin-right: 50%;
+  padding: 1em;
+  background: #cde;
+}
+
+textarea {
+  border: 0.1em solid #ccc;
+  position: relative; left: 1%;
+  width: 98%;
+}
+
+#close_button, #really_upload_button {
+  float: right;
+}
+

@@ -1,0 +1,42 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <title></title>
+    <link rel="stylesheet" href="core.css" type="text/css">
+    <script type="text/javascript" src="lib/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="lib/coffee-script.js"></script>
+    <script type="text/coffeescript" src="lib/core.coffee"></script>
+    <script type="text/coffeescript" src="app.coffee"></script>
+  </head>
+  <body>
+
+  <h1>Commodore 64 character set editor</h1>
+
+  <table id="charset"></table>
+
+  <table id="editor"></table>
+
+  <div id="buttons">
+    <input id="upload_button" type="button" value="Upload">
+    <input id="download_button" type="button" value="Download">
+  </div>
+
+  <div id="upload_dialog">
+    <div>
+      <p>Do <tt>base64 &lt; charset.bin</tt> then paste the output here and press the Upload button</p>
+      <textarea cols=80 rows=25></textarea>
+      <input id="really_upload_button" type="button" value="Upload">
+    </div>
+  </div>
+
+  <div id="download_dialog">
+    <div>
+      <p>Paste this nonsense into your console window.  WARNING: Will destroy any file in the working directory named <tt>charset.bin</tt></p>
+      <textarea cols=80 rows=25></textarea>
+      <input id="close_button" type="button" value="Close">
+    </div>
+  </div>
+
+  </body>
+</html>
