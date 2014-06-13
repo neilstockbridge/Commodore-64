@@ -1,7 +1,6 @@
 
 # PLAN:
 # + Version 2:
-#   + show the character code that is selected
 #   + choose bg/fg color to show
 #   + assemble multiple characters up to 4x4 in grid by painting with selected char for larger assemblies
 # + Version 3:
@@ -104,6 +103,9 @@ class CharacterSet
 
   when_character_clicked: ( event) =>
     @selected_character_code = event.currentTarget.id.substr 1 # the IDs are like "c45" for character code 45 ( decimal)
+    code_in_hex = @selected_character_code.toString 16
+    padding = if 1 < code_in_hex.length then '' else '0'
+    $('#selected_character_code').html 'Code: $'+ padding+ code_in_hex
     # The editor should show the newly selected character
     editor.render()
 

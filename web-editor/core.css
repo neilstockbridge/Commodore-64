@@ -11,7 +11,7 @@ body {
 
 h1 { margin-bottom: 0.5em }
 
-p { margin-bottom: 1em }
+p { margin-top: 0.5em }
 
 input[type=button] {
   padding: 0.4em 0.5em;
@@ -28,20 +28,25 @@ input[type=button]:hover {
   color: #98e;
 }
 
+#editor_box, #charset { display: inline-block }
 #editor, #charset {
-  display: inline-block;
   vertical-align: top;
   border-collapse: collapse;
 }
 
 #editor td, #charset td {
   border: 1px solid black;
-  width: 16px;
-  height: 16px;
+  line-height: 0;
 }
+
+#editor td { width: 16px; height: 16px }
 
 #editor td:hover, #charset td:hover {
   border-color: #ccc;
+}
+
+#editor_box p {
+  font-family: monospace
 }
 
 #buttons { margin-top: 0.5em }
