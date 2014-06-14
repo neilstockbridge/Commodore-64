@@ -35,9 +35,11 @@ C64_COLORS = [
   '#959595',
 ]
 
+scale = 3 # number of on-screen pixels to each C64 pixel
 
 character_set = null
 editor = null
+macro = null
 
 background_color = C64_COLORS[6]
 foreground_color = C64_COLORS[14]
@@ -47,7 +49,6 @@ class Character
 
   constructor: ->
     @data = ( [0,0,0,0,0,0,0,0] for row in [0..7] )
-    scale = 3 # number of on-screen pixels to each C64 pixel
     @canvas = elm 'canvas', width:8*scale, height:8*scale
     @context = @canvas.getContext '2d'
     @image_data = @context.createImageData  @canvas.width, @canvas.height
@@ -92,10 +93,10 @@ class CharacterSet
         character_code = 32 * row + column
         character = new Character()
         @characters[ character_code] = character
-        td = elm 'td', id: "c#{character_code}", character.canvas
+        td = elm 'td', id:"c#{character_code}", title:@in_hex(character_code), character.canvas
         tr.append  td
       table.append  tr
-    $('#charset td').click @when_character_clicked
+    table.find('td').click @when_character_clicked
     @render()
 
   selected_character: ->
@@ -106,9 +107,7 @@ class CharacterSet
 
   when_character_clicked: ( event) =>
     @selected_character_code = event.currentTarget.id.substr 1 # the IDs are like "c45" for character code 45 ( decimal)
-    code_in_hex = @selected_character_code.toString 16
-    padding = if 1 < code_in_hex.length then '' else '0'
-    $('#selected_character_code').html 'Code: $'+ padding+ code_in_hex
+    $('#selected_character_code').html 'Code: '+ @in_hex(parseInt @selected_character_code)
     # The editor should show the newly selected character
     editor.render()
 
@@ -132,6 +131,11 @@ class CharacterSet
         data.push  byte
     "cat <<. | base64 -d > charset.bin\n"+ Base64::encoded( data )+ "\n.\n"
 
+  in_hex: ( number ) ->
+    hex = number.toString 16
+    padding = if 1 < hex.length then '' else '0'
+    '$'+ padding+ hex
+
 
 class Editor
 
@@ -144,8 +148,7 @@ class Editor
         cell = elm 'td', id: "e#{row}#{column}"
         $(tr).append  cell
       table.append  tr
-    $('#editor td').mousedown @when_button_pressed
-    $('#editor td').mouseup @when_button_released
+    table.find('td').mousedown(@when_button_pressed).mouseup @when_button_released
     @render()
 
   coordinates_from: ( event) ->
@@ -175,6 +178,7 @@ class Editor
     selected_character.set_pixel  row, column, @brush
     @render()
     selected_character.render()
+    macro.render()
 
   render: () ->
     $('#editor').find('tr').each ( row, tr ) ->
@@ -182,9 +186,41 @@ class Editor
         $(td).css 'background-color', if character_set.selected_character().pixel_at( row, column) is 0 then background_color else foreground_color
 
 
+class Macro
+
+  constructor: ->
+    @canvases = []
+    table = $('#macro')
+    for row in [0..7]
+      tr = elm 'tr', {}
+      for column in [0..7]
+        canvas = elm 'canvas', width:8*scale, height:8*scale
+        $(canvas).data 'code', 0
+        @canvases.push  canvas
+        cell = elm 'td', canvas
+        $(tr).append  cell
+      table.append  tr
+    table.find('canvas').click @when_button_pressed
+    @render()
+
+  when_button_pressed: =>
+    canvas = event.currentTarget
+    $(canvas).data 'code', character_set.selected_character_code
+    @render_canvas  canvas
+
+  render: ->
+    @render_canvas canvas for canvas in @canvases
+
+  render_canvas: ( canvas ) ->
+    code = $(canvas).data 'code'
+    character = character_set.characters[ code]
+    canvas.getContext('2d').putImageData  character.image_data, 0, 0
+
+
 $(document).ready () ->
   character_set = new CharacterSet()
   editor = new Editor()
+  macro = new Macro()
 
   # Add the colors
   $('#colors tr').each ( i, tr ) ->

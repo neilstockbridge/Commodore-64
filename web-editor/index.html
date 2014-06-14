@@ -13,21 +13,28 @@
 
   <h1>Commodore 64 character set editor</h1>
 
-  <table id="charset"></table>
+  <div style="display:inline-block">
+
+    <table id="charset"></table>
+
+    <div>
+      <div id="buttons">
+        <input id="upload_button" type="button" value="Upload">
+        <input id="download_button" type="button" value="Download">
+      </div>
+
+      <div id="colors">
+        <div><span>Background color:</span><table><tr></tr></table></div>
+        <div><span>Foreground color:</span><table><tr></tr></table></div>
+      </div>
+    </div>
+
+  </div>
 
   <div id="editor_box">
     <table id="editor"></table>
     <p id="selected_character_code">Code: $00</p>
-  </div>
-
-  <div id="buttons">
-    <input id="upload_button" type="button" value="Upload">
-    <input id="download_button" type="button" value="Download">
-  </div>
-
-  <div id="colors">
-    <div><span>Background color:</span><table><tr></tr></table></div>
-    <div><span>Foreground color:</span><table><tr></tr></table></div>
+    <table id="macro"></table>
   </div>
 
   <div id="upload_dialog">

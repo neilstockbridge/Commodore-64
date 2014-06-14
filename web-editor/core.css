@@ -11,7 +11,9 @@ body {
 
 h1 { margin-bottom: 0.5em }
 
-p { margin-top: 0.5em }
+p { margin-top: 0.5em; margin-bottom: 0.5em }
+
+td { line-height: 0 }
 
 input[type=button] {
   padding: 0.4em 0.5em;
@@ -28,40 +30,31 @@ input[type=button]:hover {
   color: #98e;
 }
 
-#editor_box, #charset { display: inline-block }
-#editor, #charset {
-  vertical-align: top;
-  border-collapse: collapse;
-}
+#charset { display: inline-block }
+#charset td { border: 0.1em solid black }
+#charset td:hover { border-color: white }
 
-#editor td, #charset td {
-  border: 1px solid black;
-  line-height: 0;
-}
+#editor_box { display: inline-block; vertical-align: top; margin-left: 0.5em }
 
 #editor td { width: 16px; height: 16px }
-
-#editor td:hover, #charset td:hover {
-  border-color: #ccc;
-}
 
 #editor_box p {
   font-family: monospace
 }
 
-#buttons { margin-top: 0.5em }
+#buttons { display: inline-block; margin-top: 0.5em }
 
-#colors { margin-top: 0.5em }
+#colors { display: inline-block; margin-top: 0.5em; float: right }
+#colors >div { text-align: right }
 #colors span { vertical-align: top; margin-right: 0.3em }
-#colors table { border-collapse: collapse; display: inline-block }
+#colors table { display: inline-block }
 #colors td {
-  border: 0.1em solid #327;
-  line-height: 0;
   width: 1em;
   height: 1em;
 }
 
-#colors td:hover { border-color: #65b }
+#charset, #editor, #macro, #colors table { border-collapse: collapse }
+#editor td:hover, #colors td:hover, #macro canvas:hover { box-shadow: 0 0 0.3em }
 
 #upload_dialog, #download_dialog {
   position: absolute; top: 10%; left: 50%;
