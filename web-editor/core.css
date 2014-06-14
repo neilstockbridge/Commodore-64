@@ -51,6 +51,18 @@ input[type=button]:hover {
 
 #buttons { margin-top: 0.5em }
 
+#colors { margin-top: 0.5em }
+#colors span { vertical-align: top; margin-right: 0.3em }
+#colors table { border-collapse: collapse; display: inline-block }
+#colors td {
+  border: 0.1em solid #327;
+  line-height: 0;
+  width: 1em;
+  height: 1em;
+}
+
+#colors td:hover { border-color: #65b }
+
 #upload_dialog, #download_dialog {
   position: absolute; top: 10%; left: 50%;
   display: none;

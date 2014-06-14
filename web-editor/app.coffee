@@ -1,12 +1,12 @@
 
 # PLAN:
 # + Version 2:
-#   + choose bg/fg color to show
 #   + assemble multiple characters up to 4x4 in grid by painting with selected char for larger assemblies
 # + Version 3:
 #   + MuCo.  Use the same charset and simply switch between hi-res and MuCo mode.  allow selection of other colors
 # + Version 4:
 #   + re-work for sprites ( also edits a single 16K region and interprets as either hi-res or MuCo depending upon a switch).  This is so, because that's the C-64 sees it
+# + indicate visually on the charset grid which character is selected
 
 
 # + The character set should be shown in 8 rows, 32 glyphs wide
@@ -96,10 +96,13 @@ class CharacterSet
         tr.append  td
       table.append  tr
     $('#charset td').click @when_character_clicked
-    character.render() for character in @characters
+    @render()
 
   selected_character: ->
     @characters[ @selected_character_code ]
+
+  render: ->
+    character.render() for character in @characters
 
   when_character_clicked: ( event) =>
     @selected_character_code = event.currentTarget.id.substr 1 # the IDs are like "c45" for character code 45 ( decimal)
@@ -182,6 +185,28 @@ class Editor
 $(document).ready () ->
   character_set = new CharacterSet()
   editor = new Editor()
+
+  # Add the colors
+  $('#colors tr').each ( i, tr ) ->
+    # Record the row index of the tr: 0 for background, 1 for foreground, etc.
+    # so that the click handler knows which color slot to change
+    $(tr).data 'index', i
+    # Go through all the colors and make a <td> for each
+    for color in C64_COLORS
+      td = elm 'td', style:'background-color:'+color
+      # Record the index within C64_COLORS so that the click handler knows
+      # which color to assign
+      $(td).data 'index', C64_COLORS.indexOf(color)
+      $(tr).append  td
+      $(td).click ( event ) =>
+        td = event.currentTarget
+        tr = this
+        color = C64_COLORS[ $(td).data 'index' ]
+        switch $(tr).data 'index'
+          when 0 then background_color = color
+          when 1 then foreground_color = color
+        character_set.render()
+        editor.render()
 
   $('#upload_button').click () ->
     $('#upload_dialog').fadeIn 'fast'
