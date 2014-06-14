@@ -67,19 +67,21 @@ class Character
   # @param  color  0 or 1
   set_pixel: ( row, column, color ) ->
     address = 8 * @code + row
-    if pixel is 1
-      data[address] |= (1 << column)
+    shifted = 1 << (7 - column)
+    if color is 1
+      data[address] |= shifted
     else
-      data[address] &|= ~(1 << column)
+      data[address] &= ~shifted
 
   render: =>
+    # Go through every pixel in the canvas
     for y in [0..@image_data.height - 1]
       # Work out the y ordinate within the character data that sources the
       # color for this ( on-screen) pixel
       sy = parseInt  y * 8 / @image_data.height
       for x in [0..@image_data.width - 1]
         sx = parseInt  x * 8 / @image_data.width
-        color = if @data[sy][sx] is 0 then background_color else foreground_color
+        color = if @pixel_at( sy, sx) is 0 then background_color else foreground_color
         r = parseInt  color.substr( 1, 2 ), 16
         g = parseInt  color.substr( 3, 2 ), 16
         b = parseInt  color.substr( 5, 2 ), 16
@@ -154,7 +156,7 @@ class Editor
     @render()
 
   coordinates_from: ( event) ->
-    [ event.currentTarget.id[1], event.currentTarget.id[2] ]
+    [ (parseInt event.currentTarget.id[1]), parseInt(event.currentTarget.id[2]) ]
 
   when_button_pressed: ( event) =>
     # The location within the grid of the cell clicked is encoded in the id of
