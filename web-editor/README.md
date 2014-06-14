@@ -11,3 +11,11 @@ This is a very simple C64 character set editor.
 
   + Uses the &lt;canvas&gt; element, so won't work with Internet Explorer.  Works with Firefox and Chrome though
 
+To set it up on a web server:
+
+    cd /path/to/your/web/root/
+    git clone https://github.com/neilstockbridge/Commodore-64.git
+    # Fix up file permissions so that the web server user can access the files ( if required)
+    # Browse to http://your-web-server/Commodore-64/web-editor/
+    # Optionally fix up things so that the rest of the Commodore-64 repository is not served
+
