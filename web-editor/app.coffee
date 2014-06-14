@@ -35,6 +35,15 @@ C64_COLORS = [
 
 scale = 3 # number of on-screen pixels to each C64 pixel
 
+# Rather than have structures that reflect character and sprite geometries, the
+# backing data is kept as a single Array of byte ( each represented as a Number
+# between 0 and 255), 16384 entries long ( for 256 64-byte sprites), in much
+# the same format as the C64 itself uses.  This is because a single character
+# set or sprite sheet may contain both hi-res and multi-color elements with no
+# record of which is which, so this tool could not possibly export the data
+# unless it was already in the format expected by the C64.
+#
+data = []
 character_set = null
 editor = null
 macro = null
@@ -45,17 +54,23 @@ foreground_color = C64_COLORS[14]
 
 class Character
 
-  constructor: ->
-    @data = ( [0,0,0,0,0,0,0,0] for row in [0..7] )
+  constructor: ( @code ) ->
     @canvas = elm 'canvas', width:8*scale, height:8*scale
     @context = @canvas.getContext '2d'
     @image_data = @context.createImageData  @canvas.width, @canvas.height
 
   pixel_at: ( row, column ) ->
-    @data[ row][ column]
+    address = 8 * @code + row
+    mask = 1 << (7 - column)
+    if 0 < ( (data[address] || 0) & mask ) then 1 else 0
 
+  # @param  color  0 or 1
   set_pixel: ( row, column, color ) ->
-    @data[ row][ column] = color
+    address = 8 * @code + row
+    if pixel is 1
+      data[address] |= (1 << column)
+    else
+      data[address] &|= ~(1 << column)
 
   render: =>
     for y in [0..@image_data.height - 1]
@@ -89,7 +104,7 @@ class CharacterSet
       tr = $( elm 'tr', {})
       for column in [0..31]
         character_code = 32 * row + column
-        character = new Character()
+        character = new Character character_code
         @characters[ character_code] = character
         td = elm 'td', id:"c#{character_code}", title:@in_hex(character_code), character.canvas
         tr.append  td
@@ -111,23 +126,11 @@ class CharacterSet
 
   import_from: ( encoded_text) ->
     data = Base64::decoded  encoded_text.replace(/[\r\n]/g, '')
-    $.each @characters, ( code, character ) ->
-      for row in [0..7]
-        for column in [0..7]
-          mask = 1 << (7 - column)
-          character.data[ row][ column] = if 0 < (data[ 8*code + row ] & mask) then 1 else 0
-      character.render()
+    character_set.render()
     editor.render()
     macro.render()
 
   export: ->
-    data = []
-    for character in @characters
-      for row in character.data
-        byte = 0
-        for bit in [0..7]
-          byte |= (1 << bit) if 1 == row[ 7 - bit ]
-        data.push  byte
     "cat <<. | base64 -d > charset.bin\n"+ Base64::encoded( data )+ "\n.\n"
 
   in_hex: ( number ) ->
