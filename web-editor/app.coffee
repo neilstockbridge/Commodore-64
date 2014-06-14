@@ -1,7 +1,5 @@
 
 # PLAN:
-# + Version 2:
-#   + assemble multiple characters up to 4x4 in grid by painting with selected char for larger assemblies
 # + Version 3:
 #   + MuCo.  Use the same charset and simply switch between hi-res and MuCo mode.  allow selection of other colors
 # + Version 4:
@@ -203,7 +201,7 @@ class Macro
     table.find('canvas').click @when_button_pressed
     @render()
 
-  when_button_pressed: =>
+  when_button_pressed: ( event ) =>
     canvas = event.currentTarget
     $(canvas).data 'code', character_set.selected_character_code
     @render_canvas  canvas
@@ -243,6 +241,7 @@ $(document).ready () ->
           when 1 then foreground_color = color
         character_set.render()
         editor.render()
+        macro.render()
 
   $('#upload_button').click () ->
     $('#upload_dialog').fadeIn 'fast'
