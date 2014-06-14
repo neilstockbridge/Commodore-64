@@ -118,6 +118,7 @@ class CharacterSet
           character.data[ row][ column] = if 0 < (data[ 8*code + row ] & mask) then 1 else 0
       character.render()
     editor.render()
+    macro.render()
 
   export: ->
     data = []
