@@ -246,10 +246,11 @@ class Editor
   when_dragged: ( event) =>
     [ row, column] = @coordinates_from  event
     @paint  row, column
+    # Prevent the drag being interpreted as something else by the browser
+    false
 
   when_button_released: ( event) =>
     $('#editor').find('td').off 'mousemove'
-    false  # FIXME: try to get around text selection cursor appearing.  maybe it's because the cursor is being dragged over the border, which is not part of the <td>
 
   paint: ( row, column) =>
     selected_character().set_pixel  row, column, @brush
