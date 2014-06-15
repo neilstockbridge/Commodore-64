@@ -23,9 +23,22 @@
         <input id="download_button" type="button" value="Download">
       </div>
 
+      <fieldset id="mode"><legend>mode</legend>
+        <div style="display:inline-block">
+          <div><label><input type="radio" name="colors" value="hi-res">hi-res</label></div>
+          <div><label><input type="radio" name="colors" value="multi-color" checked>multi-color</label></div>
+        </div>
+        <div style="display:inline-block">
+          <div><label><input type="radio" name="asset" value="charset" checked>charset</label></div>
+          <div><label><input type="radio" name="asset" value="sprites">sprites</label></div>
+        </div>
+      </fieldset>
+
       <div id="colors">
         <div><span>Background color:</span><table><tr></tr></table></div>
         <div><span>Foreground color:</span><table><tr></tr></table></div>
+        <div class="multi-color"><span>Background color 1:</span><table><tr></tr></table></div>
+        <div class="multi-color"><span>Background color 2:</span><table><tr></tr></table></div>
       </div>
     </div>
 

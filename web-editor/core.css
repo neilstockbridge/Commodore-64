@@ -30,19 +30,32 @@ input[type=button]:hover {
   color: #98e;
 }
 
+fieldset {
+  display: inline-block;
+  border: 0.1em solid #ccc;
+  border-radius: 0.2em;
+  padding: 0.1em 0.3em;
+}
+
+legend { padding: 0  0.2em }
+
 #charset { display: inline-block }
 #charset td { border: 0.1em solid black }
 #charset td:hover { border-color: white }
 
 #editor_box { display: inline-block; vertical-align: top; margin-left: 0.5em }
 
-#editor td { width: 16px; height: 16px }
+#editor td { width: 32px; height: 16px }
+#editor.hi-res td { width: 16px }
 
 #editor_box p {
   font-family: monospace
 }
 
-#buttons { display: inline-block; margin-top: 0.5em }
+#buttons { display: inline-block; margin-top: 0.5em; vertical-align: top }
+
+#mode { margin-left: 0.5em }
+#mode >div { margin: 0.1em  0.2em }
 
 #colors { display: inline-block; margin-top: 0.5em; float: right }
 #colors >div { text-align: right }
