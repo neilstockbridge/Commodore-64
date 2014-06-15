@@ -64,8 +64,8 @@ legend { padding: 0  0.2em }
 #colors span.on_brush { color: black }
 #colors table { display: inline-block }
 #colors td {
-  width: 1.1em;
-  height: 1.1em;
+  width: 1em;
+  height: 1em;
 }
 
 #charset, #editor, #macro, #colors table { border-collapse: collapse }
