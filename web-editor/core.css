@@ -59,11 +59,13 @@ legend { padding: 0  0.2em }
 
 #colors { display: inline-block; margin-top: 0.5em; float: right }
 #colors >div { text-align: right }
-#colors span { vertical-align: top; margin-right: 0.3em }
+#colors span { vertical-align: top; margin-right: 0.3em; color: #999; cursor: pointer }
+#colors span:hover { color: #333 }
+#colors span.on_brush { color: black }
 #colors table { display: inline-block }
 #colors td {
-  width: 1em;
-  height: 1em;
+  width: 1.1em;
+  height: 1.1em;
 }
 
 #charset, #editor, #macro, #colors table { border-collapse: collapse }

@@ -188,7 +188,6 @@ class CharacterSet
     # If the user is editing a charset but switched to sprites mode and then
     # back then only 2K not 16K should be exported
     to_export = if mode.asset_type is 'charset' and 2048 < data.length then data.slice 0, 2048 else data
-    console.log  mode.asset_mode,to_export.length
     "cat <<. | base64 -d > charset.bin\n"+ Base64::encoded( to_export )+ "\n.\n"
 
   in_hex: ( number ) ->
@@ -237,7 +236,8 @@ class Editor
     # the element as "e03" for row 0, column 3
     [ row, column] = @coordinates_from  event
     # The brush should be the opposite of the pixel currently underneath the cursor
-    @brush = 1 - selected_character().pixel_at( row, column)
+    if mode.color_mode is 'hi-res'
+      @brush = 1 - selected_character().pixel_at( row, column)
     # If the pixel is cleared ( transparent, background color) then go in to
     # "set" mode for setting pixels until the mouse button is released
     $('#editor').find('td').on 'mousemove', @when_dragged
@@ -321,6 +321,13 @@ $(document).ready () ->
         character_set.render()
         editor.render()
         macro.render()
+  # When a color label is clicked, the brush should be dipped in to that color
+  $('#colors span').each ( i, span) ->
+    $(span).click () ->
+      editor.brush = i
+      $('#colors span').each ( i, span ) ->
+        $(span).removeClass 'on_brush'
+      $(span).addClass 'on_brush'
 
   # When multi-color mode is selected:
   #  + Background colors 1 and 2 should be revealed
