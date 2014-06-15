@@ -53,6 +53,11 @@ macro = null
 # unless it was already in the format expected by the C64.
 #
 data = []
+fill_out_data = ->
+  # Ensure that data[] is filled with 0s rather than undefined values
+  last_byte = mode.entity_stride * 256 - 1
+  data[ address] ||= 0 for address in [0..last_byte]
+
 selected_character_code = 0
 selected_character = ->
   character_set.characters[ selected_character_code ]
@@ -174,13 +179,17 @@ class CharacterSet
     editor.render()
 
   import_from: ( encoded_text) ->
-    data = Base64::decoded  encoded_text.replace(/[\r\n]/g, '')
+    data = Base64::decoded  encoded_text
     character_set.render()
     editor.render()
     macro.render()
 
   export: ->
-    "cat <<. | base64 -d > charset.bin\n"+ Base64::encoded( data )+ "\n.\n"
+    # If the user is editing a charset but switched to sprites mode and then
+    # back then only 2K not 16K should be exported
+    to_export = if mode.asset_type is 'charset' and 2048 < data.length then data.slice 0, 2048 else data
+    console.log  mode.asset_mode,to_export.length
+    "cat <<. | base64 -d > charset.bin\n"+ Base64::encoded( to_export )+ "\n.\n"
 
   in_hex: ( number ) ->
     hex = number.toString 16
@@ -286,6 +295,9 @@ class Macro
 
 
 $(document).ready () ->
+
+  fill_out_data()
+
   character_set = new CharacterSet()
   editor = new Editor()
   macro = new Macro()
@@ -325,9 +337,7 @@ $(document).ready () ->
       when 'multi-color' then $('.multi-color').fadeIn 'fast'
     mode = MODE[ asset_mode][ color_mode]
 
-    # Ensure that data[] is filled with 0s rather than undefined values
-    last_byte = mode.entity_stride * 256 - 1
-    data[ address] ||= 0 for address in [0..last_byte]
+    fill_out_data()
 
     character_set.render()
     editor.build()

@@ -62,6 +62,8 @@ class Base64
       masked = ( data[cursor+ offset] || 0 ) & mask
       if (shift < 0) then (masked << -shift) else (masked >> shift)
 
+    terminator_countdown = 76 / 4  # Wrap at 76.  4 characters output per loop
+
     while cursor < data.length
       remains = data.length - cursor
       encoded_data += ALPHABET[c] for c in [
@@ -70,12 +72,20 @@ class Base64
         if (1 < remains) then ( f(1, 0x0f, -2) | f(2, 0xc0, 6) ) else 64,
         if (2 < remains) then f(2, 0x3f, 0) else 64,
       ]
+      # Insert a line terminator every 76 characters
+      terminator_countdown -= 1
+      if terminator_countdown is 0
+        encoded_data += "\n"
+        terminator_countdown = 76 / 4
       cursor += 3
 
     encoded_data
 
 
   decoded: ( text ) ->
+    # Strip any line terminators
+    text = text.replace /[\r\n]/g, ''
+
     data = []
 
     cursor = 0
