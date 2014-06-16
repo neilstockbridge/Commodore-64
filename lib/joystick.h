@@ -3,6 +3,9 @@
 #define __JOYSTICK_H
 
 
+#include <stdint.h>
+
+
 /* Intended to be like cc65 joystick support but only support Joystick#2 on the C64 */
 
 #define  JOY_UP     0
@@ -19,10 +22,7 @@
 
 
 // Provides the current state of Joystick #2
-uint8_t joy_read()
-{
-  return CIA1.pra;
-}
+extern  uint8_t  joy_read();
 
 
 #endif

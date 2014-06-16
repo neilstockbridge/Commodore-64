@@ -1,20 +1,9 @@
 
 PROJECT = 8-way-scroll
 
-PARTS = main.o asm.o
+LIBDIR=../lib
 
-CFLAGS = -O -Wall
+PARTS = main.o asm.o $(LIBDIR)/joystick.o
 
-.c.o:
-	cl65 -c $< -o $@
-
-.S.o:
-	ca65 $< -o $@
-
-.SILENT:
-all: $(PARTS)
-	cl65 -o /tmp/$(PROJECT).prg $(PARTS)
-
-clean:
-	rm -f *.o *.map /tmp/$(PROJECT).prg
+include $(LIBDIR)/Makefile
 
