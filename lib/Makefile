@@ -2,7 +2,7 @@
 # Define PROJECT, LIBDIR and PARTS then:
 #  include $(LIBDIR)/Makefile
 
-CFLAGS = -O -I$(LIBDIR)
+CFLAGS += -O -I$(LIBDIR)
 
 .c.o:
 	cl65 $(CFLAGS) $(LDFLAGS) -c $< -o $@
