@@ -8,7 +8,7 @@ CFLAGS += -O -I$(LIBDIR)
 	cl65 $(CFLAGS) $(LDFLAGS) -c $< -o $@
 
 .S.o:
-	ca65 $< -o $@
+	ca65 $(AFLAGS) $< -o $@
 
 .SILENT:
 all: $(PARTS)
