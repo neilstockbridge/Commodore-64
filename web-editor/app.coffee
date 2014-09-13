@@ -2,16 +2,26 @@
 # PLAN:
 # + indicate visually on the charset grid which character is selected
 # + tile editor for assembling 4x4 tiles and then map editor
+#   - be able to select (changeable) color when painting characters on tiles
 # - Erase, mirror, flip, pan ( move)
 # - In Sprite mode:
 #   - Hi-res overlays
-
+# - Colors may be selected with the mouse wheel
+# - Reduce clutter: Remove Upload, Download and hires/muco mode selection UI since don't need it all the time
+#   - Remove color section.  Instead, show currently selected color ( and maybe its description - "background" etc.) and then have a key to select the color that should go in that color slot
+# - Show equivalent grays for colors
+#   - In order of ascending greyness ( in pairs, black and white on their own)
+#   - black,blue brown red darkgray purple orange lightblue midgray green pink cyan lightgray yellow lightgreen white
 
 # + The character set should be shown in 8 rows, 32 glyphs wide
 # + Character codes may be selected and the glyph is shown in the editor
 # + The editor should be shown with 8x8 pixels for editing a single glyph
 # + Clicking on a pixel within the editor should invert that pixel.  Holding
 #   down will paint not by inverting but the inverted value of the click
+
+
+# Slide should work for sprites too
+# Commit: added Help plus hotkeys for:?
 
 
 class Color
@@ -99,6 +109,16 @@ class Mode
   mask: ->
     if @color_mode is 'hi-res' then 0x1 else 0x3
 
+  rotate_left: ( value, filler ) ->
+    switch @color_mode
+      when 'hi-res' then [ value << 1  & 0xff | filler, value >> 7  & 0x1 ]
+      when 'multi-color' then [ value << 2  & 0xff | filler, value >> 6  & 0x3 ]
+
+  rotate_right: ( value, filler ) ->
+    switch @color_mode
+      when 'hi-res' then [ value >> 1 | filler, (value & 0x1) << 7 ]
+      when 'multi-color' then [ value >> 2 | filler, (value & 0x3) << 6 ]
+
 MODE = {}
 for asset_mode in ['charset','sprites']
   MODE[ asset_mode] = {}
@@ -151,6 +171,55 @@ class Character
         @image_data.data[pb+2] = color.b
         @image_data.data[pb+3] = 255 # A
     @context.putImageData  @image_data, 0, 0
+
+  blank: ->
+    for row in [0..mode.entity_height-1]
+      for column in [0..mode.entity_width-1]
+        @set_pixel row, column, 0
+    character_set.render()
+    editor.render()
+    macro.render()
+
+  slide: ( direction) ->
+    [ address, shift, mask ] = @directions_to  0, 1
+    last_row_index = mode.entity_height - 1
+    row_stride = mode.row_stride
+
+    switch direction
+      when 'up'
+        for ofs in [0..row_stride-1]
+          # Remember the contents of the first row because it is about to be
+          # overwitten by the contents of the second row
+          remember = data[ address+ ofs]
+          for row in [0..last_row_index]
+            data[ address+ row_stride*row+ ofs] = if row < last_row_index then data[ address+ row_stride*(row+1)+ ofs] else remember
+      when 'down'
+        for ofs in [0..row_stride-1]
+          # Remember the contents of the last row
+          remember = data[ address+ row_stride*last_row_index+ ofs]
+          for row in [last_row_index..0]
+            data[ address+ row_stride*row+ ofs] = if 0 < row then data[ address+ row_stride*(row-1)+ ofs] else remember
+      when 'left'
+        for row in [0..last_row_index]
+          base = address+ row_stride* row
+          # Grab the most significant pixel ready to feed in to the least
+          # significant byte
+          [ ignore, ousted ] = mode.rotate_left  data[ base+ 0]
+          for ofs in [row_stride-1..0]
+            [ rotated, ousted ] = mode.rotate_left  data[ base+ ofs], ousted
+            data[ base+ ofs] = rotated
+      when 'right'
+        for row in [0..last_row_index]
+          base = address+ row_stride* row
+          # Grab the least significant pixel ready to feed in to the most
+          # significant byte
+          [ ignore, ousted ] = mode.rotate_right  data[ base+ row_stride-1]
+          for ofs in [0..row_stride-1]
+            [ rotated, ousted ] = mode.rotate_right  data[ base+ ofs], ousted
+            data[ base+ ofs] = rotated
+    character_set.render()
+    editor.render()
+    macro.render()
 
 
 class CharacterSet
@@ -393,4 +462,22 @@ $(document).ready () ->
 
   $('#close_button').click () ->
     $('#download_dialog').fadeOut 'fast'
+
+  # Hotkeys
+  K_LEFT =   37
+  K_UP =     38
+  K_RIGHT =  39
+  K_DOWN =   40
+  K_DELETE = 46
+  K_H =      72
+  $('body').keyup ( event) ->
+    switch event.which
+      when K_H then $('#help_dialog').fadeToggle 'fast'
+      when K_UP then selected_character().slide 'up'
+      when K_DOWN then selected_character().slide 'down'
+      when K_LEFT then selected_character().slide 'left'
+      when K_RIGHT then selected_character().slide 'right'
+      when K_DELETE then selected_character().blank()
+      else
+        console.log 'Key released:', event.which
 

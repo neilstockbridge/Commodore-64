@@ -13,6 +13,13 @@ h1 { margin-bottom: 0.5em }
 
 p { margin-top: 0.5em; margin-bottom: 0.5em }
 
+dt {
+  float: left;
+  clear: both;
+}
+dt { width: 4em; font-weight: bold }
+dd { white-space: no-wrap }
+
 td { line-height: 0 }
 
 input[type=button] {
@@ -80,18 +87,21 @@ legend { padding: 0  0.2em }
 #charset, #editor, #macro, #colors table { border-collapse: collapse }
 #editor td:hover, #colors td:hover, #macro canvas:hover { box-shadow: 0 0 0.3em }
 
-#upload_dialog, #download_dialog {
+.dialog {
   position: absolute; top: 10%; left: 50%;
   display: none;
   z-index: 9;
 }
 
-#upload_dialog >div, #download_dialog >div {
+.dialog >div {
   margin-left: -50%;
   margin-right: 50%;
   padding: 1em;
   background: #cde;
+  box-shadow: 0 0 0.4em -0.2em;
 }
+
+#help_dialog { min-width: 50% }
 
 textarea {
   border: 0.1em solid #ccc;

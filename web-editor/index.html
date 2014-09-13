@@ -11,7 +11,7 @@
   </head>
   <body>
 
-  <h1>Commodore 64 character set editor</h1>
+  <p>Press <tt>h</tt> for help.</p>
 
   <div style="display:inline-block">
 
@@ -53,7 +53,25 @@
     </div>
   </div>
 
-  <div id="upload_dialog">
+  <div id="help_dialog" class="dialog">
+    <div>
+      <h2>Help</h2>
+      <dl>
+        <dt>0<dd>Select background ( transparent) color
+        <dt>1<dd>Select foreground ( or changeable) color
+        <dt>2<dd>Select first common color
+        <dt>3<dd>Select second common color
+        <dt>delete<dd>blank the current character or sprite
+        <dt>up<dd>slide the pixels up
+        <dt>down<dd>slide the pixels down
+        <dt>left<dd>slide the pixels left
+        <dt>right<dd>slide the pixels right
+        <dt>h<dd>This help
+      </dl>
+    </div>
+  </div>
+
+  <div id="upload_dialog" class="dialog">
     <div>
       <p>Do <tt>base64 &lt; charset.bin</tt> then paste the output here and press the Upload button</p>
       <!-- or dd status=noxfer if=/usr/lib/vice/C64/chargen bs=2K skip=1 2>/dev/null | base64 -->
@@ -62,7 +80,7 @@
     </div>
   </div>
 
-  <div id="download_dialog">
+  <div id="download_dialog" class="dialog">
     <div>
       <p>Paste this nonsense into your console window.  WARNING: Will destroy any file in the working directory named <tt>charset.bin</tt></p>
       <textarea cols=80 rows=25></textarea>
