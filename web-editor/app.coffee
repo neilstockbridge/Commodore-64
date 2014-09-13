@@ -1,7 +1,10 @@
 
 # PLAN:
-# + shouldbe able to paint with bg colors 1 and 2
 # + indicate visually on the charset grid which character is selected
+# + tile editor for assembling 4x4 tiles and then map editor
+# - Erase, mirror, flip, pan ( move)
+# - In Sprite mode:
+#   - Hi-res overlays
 
 
 # + The character set should be shown in 8 rows, 32 glyphs wide
@@ -295,6 +298,31 @@ class Macro
     canvas.getContext('2d').putImageData  character.image_data, 0, 0
 
 
+class Animation
+
+  constructor: ->
+    # Create the <canvas>, which depends upon the "scale" setting
+    @canvas = elm 'canvas', width:8*scale, height:8*scale
+    $('#animation_section').append @canvas
+    # When the "Frames" field is changed..
+    @frames_field = $ '#animation_section input'
+    @frames_field.bind 'change keyup paste input', ( event) =>
+      # Set the number of frames to play and reset the animation ( in case the
+      # number of frames to play was reduced)
+      parsed = parseInt $(event.currentTarget).val()
+      @frames_to_play = if isNaN( parsed) then 0 else parsed
+      @frame = 0
+    fps = 5
+    setInterval @animate, 1000/fps
+
+  animate: =>
+    character = character_set.characters[ selected_character_code + @frame]
+    if character
+      @canvas.getContext('2d').putImageData( character.image_data, 0, 0)
+      @frame += 1
+      @frame = 0 if @frames_to_play <= @frame
+
+
 $(document).ready () ->
 
   fill_out_data()
@@ -302,6 +330,7 @@ $(document).ready () ->
   character_set = new CharacterSet()
   editor = new Editor()
   macro = new Macro()
+  animate = new Animation()
 
   # Add the colors
   $('#colors tr').each ( row_index, tr ) ->

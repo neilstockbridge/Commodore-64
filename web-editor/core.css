@@ -52,6 +52,15 @@ legend { padding: 0  0.2em }
   font-family: monospace
 }
 
+#animation_section {
+  margin-top: 0.5em;
+}
+#animation_section input {
+  width: 2em;
+  padding: 0.2em;
+  background: #eee;
+}
+
 #buttons { display: inline-block; margin-top: 0.5em; vertical-align: top }
 
 #mode { margin-left: 0.5em }
