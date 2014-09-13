@@ -13,12 +13,13 @@ h1 { margin-bottom: 0.5em }
 
 p { margin-top: 0.5em; margin-bottom: 0.5em }
 
+dt, dd { padding-top: 0.3em }
 dt {
   float: left;
   clear: both;
+  width: 4em;
+  font-weight: bold;
 }
-dt { width: 4em; font-weight: bold }
-dd { white-space: no-wrap }
 
 td { line-height: 0 }
 

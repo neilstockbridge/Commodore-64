@@ -3,7 +3,7 @@
 # + indicate visually on the charset grid which character is selected
 # + tile editor for assembling 4x4 tiles and then map editor
 #   - be able to select (changeable) color when painting characters on tiles
-# - Erase, mirror, flip, pan ( move)
+# - mirror, flip
 # - In Sprite mode:
 #   - Hi-res overlays
 # - Colors may be selected with the mouse wheel
@@ -18,10 +18,6 @@
 # + The editor should be shown with 8x8 pixels for editing a single glyph
 # + Clicking on a pixel within the editor should invert that pixel.  Holding
 #   down will paint not by inverting but the inverted value of the click
-
-
-# Slide should work for sprites too
-# Commit: added Help plus hotkeys for:?
 
 
 class Color
@@ -57,6 +53,11 @@ character_set = null
 editor = null
 macro = null
 
+render_everything = () ->
+  character_set.render()
+  editor.render()
+  macro.render()
+
 # Rather than have structures that reflect character and sprite geometries, the
 # backing data is kept as a single Array of byte ( each represented as a Number
 # between 0 and 255), 16384 entries long ( for 256 64-byte sprites), in much
@@ -74,6 +75,8 @@ fill_out_data = ->
 selected_character_code = 0
 selected_character = ->
   character_set.characters[ selected_character_code ]
+
+copy_from_index = 0
 
 # An Array of Color for ( in this order) background, foreground, background #1,
 # background #2
@@ -176,9 +179,15 @@ class Character
     for row in [0..mode.entity_height-1]
       for column in [0..mode.entity_width-1]
         @set_pixel row, column, 0
-    character_set.render()
-    editor.render()
-    macro.render()
+    render_everything()
+
+  copy_from: ( index ) ->
+    from_base = mode.entity_stride * copy_from_index
+    to_base = mode.entity_stride * @code
+    for row in [0..mode.entity_height-1]
+      for ofs in [0..mode.row_stride-1]
+        data[ to_base+ mode.row_stride*row+ ofs] = data[ from_base+ mode.row_stride*row+ ofs]
+    render_everything()
 
   slide: ( direction) ->
     [ address, shift, mask ] = @directions_to  0, 1
@@ -217,9 +226,7 @@ class Character
           for ofs in [0..row_stride-1]
             [ rotated, ousted ] = mode.rotate_right  data[ base+ ofs], ousted
             data[ base+ ofs] = rotated
-    character_set.render()
-    editor.render()
-    macro.render()
+    render_everything()
 
 
 class CharacterSet
@@ -252,9 +259,7 @@ class CharacterSet
 
   import_from: ( encoded_text) ->
     data = Base64::decoded  encoded_text
-    character_set.render()
-    editor.render()
-    macro.render()
+    render_everything()
 
   export: ->
     # If the user is editing a charset but switched to sprites mode and then
@@ -417,9 +422,7 @@ $(document).ready () ->
         td = event.currentTarget
         tr = this  # cheekily taken from jQuery setting "this" for each loop of $('#colors tr').each
         chosen_color[ $(tr).data 'index'] = C64_COLORS[ $(td).data 'index']
-        character_set.render()
-        editor.render()
-        macro.render()
+        render_everything()
   # When a color label is clicked, the brush should be dipped in to that color
   $('#colors span').each ( i, span) ->
     $(span).click () ->
@@ -445,9 +448,7 @@ $(document).ready () ->
 
     fill_out_data()
 
-    character_set.render()
-    editor.build()
-    macro.render()
+    render_everything()
 
   $('#upload_button').click () ->
     $('#upload_dialog').fadeIn 'fast'
@@ -469,10 +470,22 @@ $(document).ready () ->
   K_RIGHT =  39
   K_DOWN =   40
   K_DELETE = 46
+  K_0      = 48
+  K_1      = 49
+  K_2      = 50
+  K_3      = 51
+  K_C =      67
   K_H =      72
+  K_V =      86
   $('body').keyup ( event) ->
     switch event.which
       when K_H then $('#help_dialog').fadeToggle 'fast'
+      when K_0 then editor.brush = 0
+      when K_1 then editor.brush = 1
+      when K_2 then editor.brush = 2
+      when K_3 then editor.brush = 3
+      when K_C then copy_from_index = selected_character_code
+      when K_V then selected_character().copy_from  copy_from_index
       when K_UP then selected_character().slide 'up'
       when K_DOWN then selected_character().slide 'down'
       when K_LEFT then selected_character().slide 'left'
