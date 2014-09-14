@@ -13,7 +13,7 @@ window.elm = ( tag, attributes, builder = null) ->
   # parameter.  "builder" could either be: 1) a string, 2) a DOM element, or 3)
   # a function that when invoked returns either an element, a string or a list
   # where each item is either an element or a string
-  if builder is null and ( typeof attributes in ( typeof e for e in [Function,""]) or attributes.nodeType? )
+  if builder is null and ( typeof attributes in ( typeof e for e in [Function,""]) or attributes.nodeType? or $.isArray(attributes) )
     builder = attributes
     attributes = {}
   # Construct the element

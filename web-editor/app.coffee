@@ -65,6 +65,11 @@ character_set = null
 editor = null
 macro = null
 
+in_hex = ( number ) ->
+  hex = number.toString 16
+  padding = if 1 < hex.length then '' else '0'
+  padding+ hex
+
 render_everything = () ->
   character_set.render()
   editor.render()
@@ -253,7 +258,7 @@ class CharacterSet
         character_code = 32 * row + column
         character = new Character character_code
         @characters[ character_code] = character
-        td = elm 'td', title:@in_hex(character_code), character.canvas
+        td = elm 'td', title:'$'+in_hex(character_code), character.canvas
         $(td).data 'code', character_code
         tr.append  td
       table.append  tr
@@ -265,7 +270,7 @@ class CharacterSet
 
   when_character_clicked: ( event) =>
     selected_character_code = $(event.currentTarget).data 'code'
-    $('#selected_character_code').html @in_hex(selected_character_code)
+    $('#selected_character_code').html '$'+in_hex(selected_character_code)
     # The editor should show the newly selected character
     editor.render()
 
@@ -278,11 +283,6 @@ class CharacterSet
     # back then only 2K not 16K should be exported
     to_export = if mode.asset_type is 'charset' and 2048 < data.length then data.slice 0, 2048 else data
     "cat <<. | base64 -d > charset.bin\n"+ Base64::encoded( to_export )+ "\n.\n"
-
-  in_hex: ( number ) ->
-    hex = number.toString 16
-    padding = if 1 < hex.length then '' else '0'
-    '$'+ padding+ hex
 
 
 class Editor
@@ -418,15 +418,29 @@ $(document).ready () ->
   macro = new Macro()
   animate = new Animation()
 
-  # Add C64_COLORS to the palette_dialog
-  table = $('#palette_dialog table')
-  $.each C64_COLORS, ( i, color ) ->
-    td = elm 'td', style:'background-color:'+color.hex
+  # Snippet to create <td> elements in palette_dialog
+  color_td = ( color_id, color_as_hex ) ->
+    cls = if color_id? then 'color' else null
+    td = elm 'td', class:cls, style:'background-color:'+color_as_hex
     # Record the index within C64_COLORS so that the palette_dialog knows which
     # color source to configure
-    $(td).data 'color', i
-    tr = elm 'tr', td
-    table.append  tr
+    $(td).data 'color_id', color_id if color_id?
+    td
+
+  # Add C64_COLORS to the palette_dialog
+  $.each C64_COLORS, ( color_id, color ) ->
+    td = color_td  color_id, color.hex
+    $('#colors_by_id').append  elm('tr', td)
+  $.each COLORS_BY_LUMA, ( i, color_ids ) ->
+    luma = in_hex parseInt( 255 * i / (COLORS_BY_LUMA.length-1))
+    luma_as_hex = '#'+ luma+ luma+ luma
+    tds = []
+    # Add a cell to show the luma
+    tds.push  color_td(  null, luma_as_hex )
+    # Add the color cell(s)
+    for color_id in color_ids
+      tds.push  color_td( color_id, C64_COLORS[ color_id].hex )
+    $('#colors_by_luma').append  elm('tr', tds)
 
   # For when the color to which a color_source refers has been changed and the
   # UI should show the newly associated color
@@ -435,11 +449,11 @@ $(document).ready () ->
 
   # When a color is chosen from the palette then the color source should be
   # updated to show the selected color
-  $('#palette_dialog td').click () ->
+  $('#palette_dialog td.color').click () ->
     # "this" is a <td>
     dlg = $(this).closest '.dialog'
     color_source_index = dlg.data 'color_source'
-    chosen_color[ color_source_index] = C64_COLORS[ $(this).data 'color']
+    chosen_color[ color_source_index] = C64_COLORS[ $(this).data 'color_id']
     update_color_source  color_source_index
     render_everything()
     dlg.fadeOut 'fast'
