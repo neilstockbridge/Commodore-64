@@ -7,11 +7,8 @@
 # - In Sprite mode:
 #   - Hi-res overlays
 # - Reduce clutter: Remove Upload, Download and hires/muco mode selection UI since don't need it all the time
-# - Show equivalent grays for colors
 # - save and restore ( as JSON) the "state" ( which colors are selected, etc.)
 # - bit limited, but remember changeable color for each entity and apply that color when painting on the macro
-#   - localStorage["a"] = JSON.stringify( object )
-#   - object = JSON.parse(localStorage["a"])
 
 # + The character set should be shown in 8 rows, 32 glyphs wide
 # + Character codes may be selected and the glyph is shown in the editor
@@ -527,6 +524,8 @@ $(document).ready () ->
   K_3      = 51
   K_C =      67
   K_H =      72
+  K_L =      76
+  K_S =      83
   K_V =      86
   $('body').keyup ( event) ->
     switch event.which
@@ -537,6 +536,8 @@ $(document).ready () ->
       when K_3 then select_color_source 3
       when K_C then copy_from_index = selected_character_code
       when K_V then selected_character().copy_from  copy_from_index
+      when K_S then localStorage["data"] = JSON.stringify( data )
+      when K_L then data = JSON.parse localStorage["data"]; render_everything()
       when K_UP then selected_character().slide 'up'
       when K_DOWN then selected_character().slide 'down'
       when K_LEFT then selected_character().slide 'left'
