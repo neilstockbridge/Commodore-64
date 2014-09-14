@@ -6,12 +6,8 @@
 # - mirror, flip
 # - In Sprite mode:
 #   - Hi-res overlays
-# - Colors may be selected with the mouse wheel
 # - Reduce clutter: Remove Upload, Download and hires/muco mode selection UI since don't need it all the time
-#   - Remove color section.  Instead, show currently selected color ( and maybe its description - "background" etc.) and then have a key to select the color that should go in that color slot
 # - Show equivalent grays for colors
-#   - In order of ascending greyness ( in pairs, black and white on their own)
-#   - black,blue brown red darkgray purple orange lightblue midgray green pink cyan lightgray yellow lightgreen white
 # - save and restore ( as JSON) the "state" ( which colors are selected, etc.)
 # - bit limited, but remember changeable color for each entity and apply that color when painting on the macro
 #   - localStorage["a"] = JSON.stringify( object )
@@ -50,6 +46,18 @@ C64_COLORS = ( new Color hex for hex in [
   '#6C5EB5',
   '#959595',
 ])
+# http://www.pepto.de/projects/colorvic/
+COLORS_BY_LUMA = [
+  [ 0],
+  [ 6, 9],
+  [ 2, 0xb],
+  [ 4, 8],
+  [ 0xc, 0xe],
+  [ 5, 0xa],
+  [ 3, 0xf],
+  [ 7, 0xd],
+  [ 1],
+]
 
 scale = 3 # number of on-screen pixels to each C64 pixel
 
@@ -82,9 +90,9 @@ selected_character = ->
 
 copy_from_index = 0
 
-# An Array of Color for ( in this order) background, foreground, background #1,
-# background #2
-chosen_color = ( C64_COLORS[i] for i in [ 6, 14, 2, 3 ])
+# An Array of Color for ( in this order) background/transparent, changeable,
+# shared #1, shared #2
+chosen_color = ( C64_COLORS[i] for i in [ 0, 9, 8, 10 ])
 
 
 # Mode is a handy box of numbers required for accessing memory correctly
@@ -257,7 +265,7 @@ class CharacterSet
 
   when_character_clicked: ( event) =>
     selected_character_code = $(event.currentTarget).data 'code'
-    $('#selected_character_code').html 'Code: '+ @in_hex(selected_character_code)
+    $('#selected_character_code').html @in_hex(selected_character_code)
     # The editor should show the newly selected character
     editor.render()
 
@@ -410,30 +418,54 @@ $(document).ready () ->
   macro = new Macro()
   animate = new Animation()
 
-  # Add the colors
-  $('#colors tr').each ( row_index, tr ) ->
-    # Record the row index of the tr: 0 for background, 1 for foreground, etc.
-    # so that the click handler knows which color slot to change
-    $(tr).data 'index', row_index
-    # Go through all the colors and make a <td> for each
-    $.each C64_COLORS, ( i, color ) =>
-      td = elm 'td', style:'background-color:'+color.hex
-      # Record the index within C64_COLORS so that the click handler knows
-      # which color to assign
-      $(td).data 'index', i
-      $(tr).append  td
-      $(td).click ( event ) =>
-        td = event.currentTarget
-        tr = this  # cheekily taken from jQuery setting "this" for each loop of $('#colors tr').each
-        chosen_color[ $(tr).data 'index'] = C64_COLORS[ $(td).data 'index']
-        render_everything()
-  # When a color label is clicked, the brush should be dipped in to that color
-  $('#colors span').each ( i, span) ->
-    $(span).click () ->
-      editor.brush = i
-      $('#colors span').each ( i, span ) ->
-        $(span).removeClass 'on_brush'
-      $(span).addClass 'on_brush'
+  # Add C64_COLORS to the palette_dialog
+  table = $('#palette_dialog table')
+  $.each C64_COLORS, ( i, color ) ->
+    td = elm 'td', style:'background-color:'+color.hex
+    # Record the index within C64_COLORS so that the palette_dialog knows which
+    # color source to configure
+    $(td).data 'color', i
+    tr = elm 'tr', td
+    table.append  tr
+
+  # For when the color to which a color_source refers has been changed and the
+  # UI should show the newly associated color
+  update_color_source = ( source_index ) ->
+    $($('#color_sources >div')[ source_index]).css 'background-color', chosen_color[ source_index].hex
+
+  # When a color is chosen from the palette then the color source should be
+  # updated to show the selected color
+  $('#palette_dialog td').click () ->
+    # "this" is a <td>
+    dlg = $(this).closest '.dialog'
+    color_source_index = dlg.data 'color_source'
+    chosen_color[ color_source_index] = C64_COLORS[ $(this).data 'color']
+    update_color_source  color_source_index
+    render_everything()
+    dlg.fadeOut 'fast'
+
+  select_color_source = ( index, div ) ->
+    editor.brush = index
+    source_divs = $('#color_sources >div')
+    source_divs.removeClass 'on_brush'
+    $(source_divs[ index]).addClass 'on_brush'
+
+  # When the page first loads, the color on the brush should be evident
+  select_color_source  editor.brush
+
+  # When a color source is selected, the brush should be dipped in to that color
+  $('#color_sources >div').each ( i, div ) ->
+    update_color_source  i
+    $(div).click () ->
+      # If the source clicked is already selected then choose the color from
+      # the palette
+      if editor.brush isnt i
+        select_color_source  i
+      else
+        dlg = $ '#palette_dialog'
+        # Tell the palette which color source it's manipulating
+        dlg.data 'color_source', i
+        dlg.fadeIn 'fast'
 
   # When multi-color mode is selected:
   #  + Background colors 1 and 2 should be revealed
@@ -467,7 +499,7 @@ $(document).ready () ->
     $('#download_dialog').fadeIn 'fast'
 
   $('#close_button').click () ->
-    $('#download_dialog').fadeOut 'fast'
+    $('.dialog').fadeOut 'fast'
 
   # Hotkeys
   K_LEFT =   37
@@ -485,10 +517,10 @@ $(document).ready () ->
   $('body').keyup ( event) ->
     switch event.which
       when K_H then $('#help_dialog').fadeToggle 'fast'
-      when K_0 then editor.brush = 0
-      when K_1 then editor.brush = 1
-      when K_2 then editor.brush = 2
-      when K_3 then editor.brush = 3
+      when K_0 then select_color_source 0
+      when K_1 then select_color_source 1
+      when K_2 then select_color_source 2
+      when K_3 then select_color_source 3
       when K_C then copy_from_index = selected_character_code
       when K_V then selected_character().copy_from  copy_from_index
       when K_UP then selected_character().slide 'up'

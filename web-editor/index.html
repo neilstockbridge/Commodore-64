@@ -13,43 +13,42 @@
 
   <p>Press <tt>h</tt> for help.</p>
 
-  <div style="display:inline-block">
-
-    <table id="charset"></table>
-
-    <div>
-      <div id="buttons">
-        <input id="upload_button" type="button" value="Upload">
-        <input id="download_button" type="button" value="Download">
-      </div>
-
-      <fieldset id="mode"><legend>mode</legend>
-        <div style="display:inline-block">
-          <div><label><input type="radio" name="colors" value="hi-res">hi-res</label></div>
-          <div><label><input type="radio" name="colors" value="multi-color" checked>multi-color</label></div>
-        </div>
-        <div style="display:inline-block">
-          <div><label><input type="radio" name="asset" value="charset" checked>charset</label></div>
-          <div><label><input type="radio" name="asset" value="sprites">sprites</label></div>
-        </div>
-      </fieldset>
-
-      <div id="colors">
-        <div><span>Background color:</span><table><tr></tr></table></div>
-        <div><span>Foreground color:</span><table><tr></tr></table></div>
-        <div class="multi-color"><span>Background color 1:</span><table><tr></tr></table></div>
-        <div class="multi-color"><span>Background color 2:</span><table><tr></tr></table></div>
-      </div>
-    </div>
-
-  </div>
+  <table id="charset"></table>
 
   <div id="editor_box">
+    <div>
+      <span id="selected_character_code">$00</span>
+      <div id="color_sources">
+        <div title="background / transparent color"></div>
+        <div title="changeable color"></div>
+        <div title="shared color #1" class="multi-color"></div>
+        <div title="shared color #2" class="multi-color"></div>
+      </div>
+    </div>
     <table id="editor"></table>
-    <p id="selected_character_code">Code: $00</p>
-    <table id="macro"></table>
-    <div id="animation_section">
-      <div>Frames:<input type="text" value=0></div>
+  </div>
+
+  <table id="macro"></table>
+
+  <div id="animation_section">
+    <div>Frames:<input type="text" value=0></div>
+  </div>
+
+  <div id="controls">
+    <fieldset id="mode"><legend>mode</legend>
+      <div style="display:inline-block">
+        <div><label><input type="radio" name="colors" value="hi-res">hi-res</label></div>
+        <div><label><input type="radio" name="colors" value="multi-color" checked>multi-color</label></div>
+      </div>
+      <div style="display:inline-block">
+        <div><label><input type="radio" name="asset" value="charset" checked>charset</label></div>
+        <div><label><input type="radio" name="asset" value="sprites">sprites</label></div>
+      </div>
+    </fieldset>
+
+    <div id="buttons">
+      <input id="upload_button" type="button" value="Upload">
+      <input id="download_button" type="button" value="Download">
     </div>
   </div>
 
@@ -70,6 +69,13 @@
         <dt>right<dd>Slide the pixels right
         <dt>h<dd>This help
       </dl>
+    </div>
+  </div>
+
+  <div id="palette_dialog" class="dialog">
+    <div>
+      <table><tr></tr></table>
+      <input id="close_button" type="button" value="Close">
     </div>
   </div>
 

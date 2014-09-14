@@ -23,6 +23,12 @@ dt {
 
 td { line-height: 0 }
 
+textarea {
+  border: 0.1em solid #ccc;
+  position: relative; left: 1%;
+  width: 98%;
+}
+
 input[type=button] {
   padding: 0.4em 0.5em;
   border-radius: 0.2em;
@@ -47,21 +53,31 @@ fieldset {
 
 legend { padding: 0  0.2em }
 
-#charset { display: inline-block }
+#charset { margin-bottom: 0.5em }
 #charset td { border: 0.1em solid black }
 #charset td:hover { border-color: white }
 
-#editor_box { display: inline-block; vertical-align: top; margin-left: 0.5em }
-
+#editor_box {
+  display: inline-block;
+  vertical-align: top;
+}
 #editor td { width: 32px; height: 16px }
 #editor.hi-res td { width: 16px }
 
-#editor_box p {
-  font-family: monospace
+#selected_character_code { vertical-align: top; font-family: monospace }
+#color_sources { display: inline-block; margin-left: 0.5em }
+#color_sources > div {
+  display: inline-block;
+  width: 0.8em;
+  height: 0.8em;
+  border: 0.2em solid #ccc;
+  cursor: pointer;
 }
+#color_sources >div.on_brush { border-bottom: none }
 
 #animation_section {
-  margin-top: 0.5em;
+  display: inline-block;
+  vertical-align: top;
 }
 #animation_section input {
   width: 2em;
@@ -69,24 +85,15 @@ legend { padding: 0  0.2em }
   background: #eee;
 }
 
-#buttons { display: inline-block; margin-top: 0.5em; vertical-align: top }
+#controls { display: inline-block; vertical-align: top }
+#buttons { margin: 0.7em }
 
 #mode { margin-left: 0.5em }
 #mode >div { margin: 0.1em  0.2em }
 
-#colors { display: inline-block; margin-top: 0.5em; float: right }
-#colors >div { text-align: right }
-#colors span { vertical-align: top; margin-right: 0.3em; color: #999; cursor: pointer }
-#colors span:hover { color: #333 }
-#colors span.on_brush { color: black }
-#colors table { display: inline-block }
-#colors td {
-  width: 1em;
-  height: 1em;
-}
-
-#charset, #editor, #macro, #colors table { border-collapse: collapse }
-#editor td:hover, #colors td:hover, #macro canvas:hover { box-shadow: 0 0 0.3em }
+#macro { display: inline-block }
+#charset, #editor, #macro { border-collapse: collapse }
+#editor td:hover, #macro canvas:hover { box-shadow: 0 0 0.3em }
 
 .dialog {
   position: absolute; top: 10%; left: 50%;
@@ -102,13 +109,9 @@ legend { padding: 0  0.2em }
   box-shadow: 0 0 0.4em -0.2em;
 }
 
-#help_dialog { min-width: 50% }
+#palette_dialog td { width: 1em; height: 1em; cursor:pointer }
 
-textarea {
-  border: 0.1em solid #ccc;
-  position: relative; left: 1%;
-  width: 98%;
-}
+#help_dialog { min-width: 50% }
 
 #close_button, #really_upload_button {
   float: right;
