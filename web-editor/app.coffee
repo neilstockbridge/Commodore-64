@@ -12,6 +12,10 @@
 # - Show equivalent grays for colors
 #   - In order of ascending greyness ( in pairs, black and white on their own)
 #   - black,blue brown red darkgray purple orange lightblue midgray green pink cyan lightgray yellow lightgreen white
+# - save and restore ( as JSON) the "state" ( which colors are selected, etc.)
+# - bit limited, but remember changeable color for each entity and apply that color when painting on the macro
+#   - localStorage["a"] = JSON.stringify( object )
+#   - object = JSON.parse(localStorage["a"])
 
 # + The character set should be shown in 8 rows, 32 glyphs wide
 # + Character codes may be selected and the glyph is shown in the editor
@@ -447,8 +451,9 @@ $(document).ready () ->
     mode = MODE[ asset_mode][ color_mode]
 
     fill_out_data()
-
-    render_everything()
+    character_set.render()
+    editor.build()
+    macro.render()
 
   $('#upload_button').click () ->
     $('#upload_dialog').fadeIn 'fast'
