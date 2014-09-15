@@ -17,9 +17,6 @@
 # - Use mouse to position cursor but then use KEYS to paint in the various
 #   colors, eliminates "mode" of selected color
 
-    # Feedback for mouse hover over tile: opacity: 0.5 for all but that hovered?
-
-
 
 # FEATURES
 # - Edit both characters and sprites in both hi-res and multi-color mode in the
