@@ -349,6 +349,18 @@ class Editor
     @build()
     # When the page first loads, the color on the brush should be evident
     @choose_brush 1 # @brush remembers whether to paint with foreground or background pixels
+    # When a color source is selected, the brush should be dipped in to that color
+    $('#color_sources >div').each ( i, div ) ->
+      $(div).click () ->
+        # If the source clicked is already selected then choose the color from
+        # the palette
+        if editor.brush isnt i
+          editor.choose_brush  i
+        else
+          dlg = $ '#palette_dialog'
+          # Tell the palette which color source it's manipulating
+          dlg.data 'pixel_value', $(div).data('pixel_value')
+          dlg.fadeIn 'fast'
 
   build: ->
     # The number of rows and columns change with the mode:
@@ -377,7 +389,9 @@ class Editor
     switch mode.color_mode
       when 'hi-res' then $('.multi-color').fadeOut 'fast'
       when 'multi-color' then $('.multi-color').fadeIn 'fast'
-    # Assign pixel values to each color source
+    # In multi-color mode, #color_sources >div#3 relates to pixel_value:3 but
+    # in hi-res mode, div#3 relates to pixel_value:1
+    # Attach the pixel_value to each color source
     $('#color_sources >div').each ( i, div ) ->
       $(div).data 'pixel_value', if mode.color_mode is 'multi-color' or i < 3 then i else 1
     @render()
@@ -429,6 +443,45 @@ class Editor
         $(td).css 'background-color', Color::for_pixel_value( selected_character().pixel_at  row, column ).hex
     $('#color_sources >div:visible').each ( pixel_value, div ) ->
       $(div).css 'background-color', Color::for_pixel_value( pixel_value).hex
+
+
+
+class Palette
+  constructor: ->
+    # Snippet to create <td> elements in palette_dialog
+    color_td = ( color_id, color_as_hex ) ->
+      cls = if color_id? then 'color' else null
+      td = elm 'td', class:cls, style:'background-color:'+color_as_hex
+      # Record the index within C64_COLORS so that the palette_dialog knows which
+      # color source to configure
+      $(td).data 'color_id', color_id if color_id?
+      td
+
+    # Add C64_COLORS to the palette_dialog
+    $.each C64_COLORS, ( color_id, color ) ->
+      td = color_td  color_id, color.hex
+      $('#colors_by_id').append  elm('tr', td)
+    $.each COLORS_BY_LUMA, ( i, color_ids ) ->
+      luma = in_hex parseInt( 255 * i / (COLORS_BY_LUMA.length-1))
+      luma_as_hex = '#'+ luma+ luma+ luma
+      tds = []
+      # Add a cell to show the luma
+      tds.push  color_td(  null, luma_as_hex )
+      # Add the color cell(s)
+      for color_id in color_ids
+        tds.push  color_td( color_id, Color::with_id(color_id).hex )
+      $('#colors_by_luma').append  elm('tr', tds)
+
+    # When a color is chosen from the palette then the color source should be
+    # updated to show the selected color
+    $('#palette_dialog td.color').click () ->
+      color_td = $(this)
+      dlg = color_td.closest '.dialog'
+      pixel_value = dlg.data 'pixel_value'
+      selected_color_id = color_td.data 'color_id'
+      Color::choose  pixel_value, selected_color_id
+      render_everything()
+      dlg.fadeOut 'fast'
 
 
 
@@ -496,56 +549,7 @@ $(document).ready () ->
   editor = new Editor()
   macro = new Macro()
   animate = new Animation()
-
-  # Snippet to create <td> elements in palette_dialog
-  color_td = ( color_id, color_as_hex ) ->
-    cls = if color_id? then 'color' else null
-    td = elm 'td', class:cls, style:'background-color:'+color_as_hex
-    # Record the index within C64_COLORS so that the palette_dialog knows which
-    # color source to configure
-    $(td).data 'color_id', color_id if color_id?
-    td
-
-  # Add C64_COLORS to the palette_dialog
-  $.each C64_COLORS, ( color_id, color ) ->
-    td = color_td  color_id, color.hex
-    $('#colors_by_id').append  elm('tr', td)
-  $.each COLORS_BY_LUMA, ( i, color_ids ) ->
-    luma = in_hex parseInt( 255 * i / (COLORS_BY_LUMA.length-1))
-    luma_as_hex = '#'+ luma+ luma+ luma
-    tds = []
-    # Add a cell to show the luma
-    tds.push  color_td(  null, luma_as_hex )
-    # Add the color cell(s)
-    for color_id in color_ids
-      tds.push  color_td( color_id, Color::with_id(color_id).hex )
-    $('#colors_by_luma').append  elm('tr', tds)
-
-  # When a color is chosen from the palette then the color source should be
-  # updated to show the selected color
-  $('#palette_dialog td.color').click () ->
-    color_td = $(this)
-    dlg = color_td.closest '.dialog'
-    pixel_value = dlg.data 'pixel_value'
-    selected_color_id = color_td.data 'color_id'
-    Color::choose  pixel_value, selected_color_id
-    render_everything()
-    dlg.fadeOut 'fast'
-
-  # When a color source is selected, the brush should be dipped in to that color
-  $('#color_sources >div').each ( i, div ) ->
-    $(div).click () ->
-      # If the source clicked is already selected then choose the color from
-      # the palette
-      if editor.brush isnt i
-        editor.choose_brush  i
-      else
-        dlg = $ '#palette_dialog'
-        # Tell the palette which color source it's manipulating
-        # In hi-res mode, div#3 relates to pixel_value:1 but in multi-color
-        # mode, div#3 relates to pixel_value:3
-        dlg.data 'pixel_value', $(div).data('pixel_value')
-        dlg.fadeIn 'fast'
+  palette = new Palette()
 
   # When multi-color mode is selected:
   #  + Background colors 1 and 2 should be revealed
