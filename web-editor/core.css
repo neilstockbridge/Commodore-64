@@ -116,7 +116,7 @@ legend { padding: 0  0.2em }
 #palette_dialog td { width: 1em; height: 1em }
 #palette_dialog td.color { cursor: pointer }
 
-#tile_palette >div, #tile_editor >div, #world >div { line-height: 0 }
+#tile_palette >div, #tile_editor >div, #world >div { line-height: 0; white-space: nowrap }
 
 #help_dialog { min-width: 50% }
 
