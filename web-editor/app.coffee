@@ -18,6 +18,9 @@
 #   colors, eliminates "mode" of selected color
 
 
+# - save changeable colors to localStorage
+
+
 # FEATURES
 # - Edit both characters and sprites in both hi-res and multi-color mode in the
 #   same bank
@@ -46,10 +49,17 @@ class Color
   # FIXME: Or load from localStorage:
   # When this object is constructed, the changeable color should either be a
   # default, or be pulled from localStorage for this character
-  id_for: {'charset':{}, 'sprites':{}}
-  for i in [0..255]
-    Color::id_for['charset'][i] = 10
-    Color::id_for['sprites'][i] = 10
+  prepare_id_for: ->
+    loaded = localStorage["changeable_colors"]
+    if loaded?
+      JSON.parse loaded
+    else
+      m = {'charset':{}, 'sprites':{}}
+      for i in [0..255]
+        m['charset'][i] = 10
+        m['sprites'][i] = 10
+      m
+  id_for: Color::prepare_id_for()
 
   # @param  hex  Example: '#68372B'
   constructor: ( @hex ) ->
@@ -749,7 +759,7 @@ $(document).ready () ->
       when K_3 then editor.choose_brush 3 if mode.color_mode is 'multi-color'
       when K_C then copy_from_index = selected_character_code
       when K_V then selected_character().copy_from  copy_from_index
-      when K_F then localStorage["data"] = JSON.stringify( data ); console.log 'Saved'
+      when K_F then localStorage['data'] = JSON.stringify( data ); localStorage['changeable_colors'] = JSON.stringify( Color::id_for ); console.log 'Saved'
       when K_L then data = JSON.parse localStorage["data"]; render_everything()
       when K_T then $('#tile_palette_dialog').fadeIn 'fast'
       when K_W then world.pan_view 'up'
