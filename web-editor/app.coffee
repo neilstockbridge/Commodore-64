@@ -8,16 +8,48 @@
 #   - Hi-res overlays
 # - Reduce clutter: Remove Upload, Download and hires/muco mode selection UI since don't need it all the time
 # - save and restore ( as JSON) the "state" ( which colors are selected, etc.)
-# - bit limited, but remember changeable color for each entity and apply that color when painting on the macro
+# - Anim problem: bases animation from selected index, so can't edit frame#2 and see animation
+# - Be able to select a sequence of frames for animation such as $6, $7, $8, $7
+# - In Sprite mode, could use the last ( unused) byte of each 64-byte block to store the changeable color
+# - In Character mode, only color IDs 0..7 may be chosen for the changeable color since the MSB of the Color RAM nybble is used to select hi-res character: 0:hi-res, 1:muco
+# - Remember for each character and sprite whether it's intended for display as hi-res or multi-color
 
-# + The character set should be shown in 8 rows, 32 glyphs wide
-# + Character codes may be selected and the glyph is shown in the editor
-# + The editor should be shown with 8x8 pixels for editing a single glyph
-# + Clicking on a pixel within the editor should invert that pixel.  Holding
-#   down will paint not by inverting but the inverted value of the click
+# - copy range of entities
+# - bit limited, but remember changeable color for each entity and apply that color when painting on the macro
+# - palette_dialog in its own class
+# - when select char, changeable color should update
+
+
+# FEATURES
+# - Edit both characters and sprites in both hi-res and multi-color mode in the
+#   same bank
+# - 256 characters or sprites from the bank are shown
+# - The data model is 16K of bytes, so hi-res and multi-color can be mixed in
+#   the same session
+# - Entity ( either character or sprite) manipulation:
+#   - Blank
+#   - Copy
+#   - Slide
+# - In hi-res mode, clicking on a pixel within the editor inverts that pixel.
+#   Holding down will paint not by inverting but the inverted value of the
+#   pixel under the initial click
+# - Save to and load from HTML5 local storage, or export and import as base64.
+#   No server-side other than a web server that can serve static files with the
+#   correct MIME type is required.
 
 
 class Color
+
+  background_color: 0
+  shared_color_1: 9
+  shared_color_2: 8
+  # FIXME: Or load from localStorage:
+  # When this object is constructed, the changeable color should either be a
+  # default, or be pulled from localStorage for this character
+  id_for: {'charset':{}, 'sprites':{}}
+  for i in [0..255]
+    Color::id_for['charset'][i] = 10
+    Color::id_for['sprites'][i] = 10
 
   # @param  hex  Example: '#68372B'
   constructor: ( @hex ) ->
@@ -25,6 +57,41 @@ class Color
     @g = parseInt @hex.substr( 3, 2 ), 16
     @b = parseInt @hex.substr( 5, 2 ), 16
 
+  with_id: ( color_id ) ->
+    C64_COLORS[ color_id ]
+
+  choose: ( pixel_value, color_id ) ->
+    console.log 'choos',pixel_value,color_id, mode.color_mode
+    switch mode.color_mode
+      when 'hi-res'
+        switch pixel_value
+          when 0 then Color::background_color = color_id
+          when 1 then Color::id_for[mode.asset_type][selected_character_code] = color_id
+      when 'multi-color'
+        switch pixel_value
+          when 0 then Color::background_color = color_id
+          when 1 then Color::shared_color_1 = color_id
+          when 2 then Color::shared_color_2 = color_id
+          when 3 then Color::id_for[mode.asset_type][selected_character_code] = color_id
+
+  # @param  index  The character code or sprite number
+  for_pixel_value: ( pixel_value, index ) ->
+    index ?= selected_character_code
+    color_id = switch mode.color_mode
+      when 'hi-res'
+        switch pixel_value
+          when 0 then Color::background_color
+          when 1 then Color::id_for[mode.asset_type][index]
+      when 'multi-color'
+        switch pixel_value
+          when 0 then Color::background_color
+          when 1 then Color::shared_color_1
+          when 2 then Color::shared_color_2
+          when 3 then Color::id_for[mode.asset_type][index]
+    C64_COLORS[ color_id]
+
+
+# FIXME: Move in to Color class
 C64_COLORS = ( new Color hex for hex in [
   '#000000',
   '#FFFFFF',
@@ -92,10 +159,6 @@ selected_character = ->
 
 copy_from_index = 0
 
-# An Array of Color for ( in this order) background/transparent, changeable,
-# shared #1, shared #2
-chosen_color = ( C64_COLORS[i] for i in [ 0, 9, 8, 10 ])
-
 
 # Mode is a handy box of numbers required for accessing memory correctly
 # depending on whether a character set or sprites are being edited and whether
@@ -157,9 +220,9 @@ class Character
     ( data[address] & mask ) >> shift & mode.mask()
 
   # @param  color  0..3
-  set_pixel: ( row, column, color ) ->
+  set_pixel: ( row, column, pixel_value ) ->
     [ address, shift, mask ] = @directions_to  row, column
-    data[address] = data[address] & ~mask | color << shift
+    data[address] = data[address] & ~mask | pixel_value << shift
 
   # Provides the memory address of the byte that controls the pixel at the
   # specified row and column along with the shift required to being the pixel
@@ -179,7 +242,7 @@ class Character
       sy = parseInt  y * mode.entity_height / @image_data.height
       for x in [0..@image_data.width - 1]
         sx = parseInt  x * mode.entity_width / @image_data.width
-        color = chosen_color[ @pixel_at  sy, sx ]
+        color = Color::for_pixel_value @pixel_at( sy, sx), @code
         # Work out the base index within image_data.data of the 4 bytes that
         # control RGBA for the pixel
         pb = 4 * ( @image_data.width * y + x )
@@ -347,7 +410,7 @@ class Editor
   render: () ->
     $('#editor').find('tr').each ( row, tr ) ->
       $(tr).children().each ( column, td ) ->
-        $(td).css 'background-color', chosen_color[ selected_character().pixel_at  row, column ].hex
+        $(td).css 'background-color', Color::for_pixel_value( selected_character().pixel_at  row, column ).hex
 
 
 class Macro
@@ -436,37 +499,41 @@ $(document).ready () ->
     tds.push  color_td(  null, luma_as_hex )
     # Add the color cell(s)
     for color_id in color_ids
-      tds.push  color_td( color_id, C64_COLORS[ color_id].hex )
+      tds.push  color_td( color_id, Color::with_id(color_id).hex )
     $('#colors_by_luma').append  elm('tr', tds)
 
   # For when the color to which a color_source refers has been changed and the
   # UI should show the newly associated color
-  update_color_source = ( source_index ) ->
-    $($('#color_sources >div')[ source_index]).css 'background-color', chosen_color[ source_index].hex
+  # FIXME: Move this to Editor
+  update_color_source = ( pixel_value ) ->
+    $($('#color_sources >div')[ pixel_value]).css 'background-color', Color::for_pixel_value( pixel_value).hex
 
   # When a color is chosen from the palette then the color source should be
   # updated to show the selected color
   $('#palette_dialog td.color').click () ->
-    # "this" is a <td>
-    dlg = $(this).closest '.dialog'
-    color_source_index = dlg.data 'color_source'
-    chosen_color[ color_source_index] = C64_COLORS[ $(this).data 'color_id']
-    update_color_source  color_source_index
+    color_td = $(this)
+    dlg = color_td.closest '.dialog'
+    pixel_value = dlg.data 'pixel_value'
+    selected_color_id = color_td.data 'color_id'
+    Color::choose  pixel_value, selected_color_id
+    update_color_source  pixel_value
     render_everything()
     dlg.fadeOut 'fast'
 
-  select_color_source = ( index, div ) ->
-    editor.brush = index
+  select_color_source = ( pixel_value, div ) ->
+    editor.brush = pixel_value
     source_divs = $('#color_sources >div')
     source_divs.removeClass 'on_brush'
-    $(source_divs[ index]).addClass 'on_brush'
+    $(source_divs[ pixel_value]).addClass 'on_brush'
 
   # When the page first loads, the color on the brush should be evident
   select_color_source  editor.brush
 
   # When a color source is selected, the brush should be dipped in to that color
   $('#color_sources >div').each ( i, div ) ->
+    # Update the UI to reflect the color associated with each source
     update_color_source  i
+
     $(div).click () ->
       # If the source clicked is already selected then choose the color from
       # the palette
@@ -475,7 +542,7 @@ $(document).ready () ->
       else
         dlg = $ '#palette_dialog'
         # Tell the palette which color source it's manipulating
-        dlg.data 'color_source', i
+        dlg.data 'pixel_value', i
         dlg.fadeIn 'fast'
 
   # When multi-color mode is selected:
