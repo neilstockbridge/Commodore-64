@@ -411,6 +411,9 @@ class Editor
     $('#editor').find('tr').each ( row, tr ) ->
       $(tr).children().each ( column, td ) ->
         $(td).css 'background-color', Color::for_pixel_value( selected_character().pixel_at  row, column ).hex
+    $('#color_sources >div').each ( pixel_value, div ) ->
+      $(div).css 'background-color', Color::for_pixel_value( pixel_value).hex
+
 
 
 class Macro
@@ -502,12 +505,6 @@ $(document).ready () ->
       tds.push  color_td( color_id, Color::with_id(color_id).hex )
     $('#colors_by_luma').append  elm('tr', tds)
 
-  # For when the color to which a color_source refers has been changed and the
-  # UI should show the newly associated color
-  # FIXME: Move this to Editor
-  update_color_source = ( pixel_value ) ->
-    $($('#color_sources >div')[ pixel_value]).css 'background-color', Color::for_pixel_value( pixel_value).hex
-
   # When a color is chosen from the palette then the color source should be
   # updated to show the selected color
   $('#palette_dialog td.color').click () ->
@@ -516,7 +513,6 @@ $(document).ready () ->
     pixel_value = dlg.data 'pixel_value'
     selected_color_id = color_td.data 'color_id'
     Color::choose  pixel_value, selected_color_id
-    update_color_source  pixel_value
     render_everything()
     dlg.fadeOut 'fast'
 
@@ -531,9 +527,6 @@ $(document).ready () ->
 
   # When a color source is selected, the brush should be dipped in to that color
   $('#color_sources >div').each ( i, div ) ->
-    # Update the UI to reflect the color associated with each source
-    update_color_source  i
-
     $(div).click () ->
       # If the source clicked is already selected then choose the color from
       # the palette
