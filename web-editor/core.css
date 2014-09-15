@@ -6,12 +6,13 @@ html * {
 }
 
 body {
-  padding: 1em;
+  padding: 0.5em 1em;
 }
 
-h1 { margin-bottom: 0.5em }
-
 p { margin-top: 0.5em; margin-bottom: 0.5em }
+
+ul { padding-left: 2em }
+li { margin-top: 0.7em; margin-bottom: 0.7em }
 
 dt, dd { padding-top: 0.3em }
 dt {
@@ -91,9 +92,11 @@ legend { padding: 0  0.2em }
 #mode { margin-left: 0.5em }
 #mode >div { margin: 0.1em  0.2em }
 
-#macro { display: inline-block }
-#charset, #editor, #macro { border-collapse: collapse }
-#editor td:hover, #macro canvas:hover { box-shadow: 0 0 0.3em }
+#tile_editor, #world { display: inline-block }
+#editor td, #tile_palette canvas, #tile_editor canvas, #world canvas { opacity: 0.9 }
+#editor td:hover, #tile_palette canvas:hover, #tile_editor canvas:hover, #world canvas:hover { opacity: 1 }
+#tile_editor { vertical-align: top }
+#charset, #editor { border-collapse: collapse }
 
 .dialog {
   position: absolute; top: 10%; left: 50%;
@@ -112,6 +115,8 @@ legend { padding: 0  0.2em }
 #palette_dialog table { display: inline-block; margin-right: 1em }
 #palette_dialog td { width: 1em; height: 1em }
 #palette_dialog td.color { cursor: pointer }
+
+#tile_palette >div, #tile_editor >div, #world >div { line-height: 0 }
 
 #help_dialog { min-width: 50% }
 

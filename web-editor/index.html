@@ -28,7 +28,15 @@
     <table id="editor"></table>
   </div>
 
-  <table id="macro"></table>
+  <div id="tile_palette_dialog" class="dialog">
+    <div>
+      <div id="tile_palette"></div>
+    </div>
+  </div>
+
+  <div id="tile_editor"></div>
+
+  <div id="world"></div>
 
   <div id="animation_section">
     <div>Frames:<input type="text" value=0></div>
@@ -55,6 +63,12 @@
   <div id="help_dialog" class="dialog">
     <div>
       <h2>Help</h2>
+      <ul>
+        <li> The top block is the character set ( or bank of sprites in "sprite" mode)
+        <li> Click a character in the character set to load it in to the editor ( below the set, on the left)
+        <li> Just above the editor is the currently selected character code and the colors to use for pixel values
+        <li> Click a color to select it, click a selected color to change it
+      </ul>
       <dl>
         <dt>0<dd>Select background ( transparent) color
         <dt>1<dd>Select foreground ( or changeable) color
@@ -65,6 +79,7 @@
         <dt>v<dd>Copy from "source" to the currently selected entity
         <dt>s<dd>Save your work to HTML5 local storage.  Depends upon browser
         <dt>l<dd>Load your work from HTML5 local storage
+        <dt>wasd<dd>Pan the view around the world
         <dt>up<dd>Slide the pixels up
         <dt>down<dd>Slide the pixels down
         <dt>left<dd>Slide the pixels left

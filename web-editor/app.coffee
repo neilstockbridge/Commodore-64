@@ -12,8 +12,13 @@
 # - In Sprite mode, could use the last ( unused) byte of each 64-byte block to store the changeable color
 # - In Character mode, only color IDs 0..7 may be chosen for the changeable color since the MSB of the Color RAM nybble is used to select hi-res character: 0:hi-res, 1:muco
 # - Remember for each character and sprite whether it's intended for display as hi-res or multi-color
-
 # - copy range of entities
+# - remove all use of <table> since <div> of <canvas> works nicely
+# - Use mouse to position cursor but then use KEYS to paint in the various
+#   colors, eliminates "mode" of selected color
+
+    # Feedback for mouse hover over tile: opacity: 0.5 for all but that hovered?
+
 
 
 # FEATURES
@@ -32,6 +37,8 @@
 # - Save to and load from HTML5 local storage, or export and import as base64.
 #   No server-side other than a web server that can serve static files with the
 #   correct MIME type is required.
+# - Assemble characters in to 4x4 tiles and paint them on to a scrollable world
+#   map
 
 
 class Color
@@ -57,7 +64,6 @@ class Color
     C64_COLORS[ color_id ]
 
   choose: ( pixel_value, color_id ) ->
-    console.log 'choos',pixel_value,color_id, mode.color_mode
     switch mode.color_mode
       when 'hi-res'
         switch pixel_value
@@ -123,7 +129,9 @@ scale = 3 # number of on-screen pixels to each C64 pixel
 
 character_set = null
 editor = null
-macro = null
+tile_palette = null
+tile_editor = null
+world = null
 
 in_hex = ( number ) ->
   hex = number.toString 16
@@ -133,7 +141,9 @@ in_hex = ( number ) ->
 render_everything = () ->
   character_set.render()
   editor.render()
-  macro.render()
+  tile_palette.render()
+  tile_editor.render()
+  world.render()
 
 # Rather than have structures that reflect character and sprite geometries, the
 # backing data is kept as a single Array of byte ( each represented as a Number
@@ -208,8 +218,9 @@ class Character
 
   constructor: ( @code ) ->
     @canvas = elm 'canvas', width:8*scale, height:8*scale
-    @context = @canvas.getContext '2d'
-    @image_data = @context.createImageData  @canvas.width, @canvas.height
+    @internal_canvas = elm 'canvas', width:8, height:8
+    @context = @internal_canvas.getContext '2d'
+    @image_data = @context.createImageData  8, 8
 
   pixel_at: ( row, column ) ->
     [ address, shift, mask ] = @directions_to  row, column
@@ -247,6 +258,7 @@ class Character
         @image_data.data[pb+2] = color.b
         @image_data.data[pb+3] = 255 # A
     @context.putImageData  @image_data, 0, 0
+    @canvas.getContext('2d').drawImage @internal_canvas, 0, 0, @canvas.width, @canvas.height
 
   blank: ->
     for row in [0..mode.entity_height-1]
@@ -433,7 +445,9 @@ class Editor
     selected_character().set_pixel  row, column, @brush
     @render()
     selected_character().render()
-    macro.render()
+    tile_palette.render()
+    tile_editor.render()
+    world.render()
 
   render: () ->
     $('#editor').find('tr').each ( row, tr ) ->
@@ -444,7 +458,7 @@ class Editor
 
 
 
-class Palette
+class ColorPalette
   constructor: ->
     # Snippet to create <td> elements in palette_dialog
     color_td = ( color_id, color_as_hex ) ->
@@ -482,36 +496,163 @@ class Palette
       dlg.fadeOut 'fast'
 
 
-
-class Macro
-
-  constructor: ->
-    @canvases = []
-    table = $('#macro')
-    for row in [0..7]
-      tr = elm 'tr', {}
-      for column in [0..7]
-        canvas = elm 'canvas', width:8*scale, height:8*scale
-        $(canvas).data 'code', 0
-        @canvases.push  canvas
-        td = elm 'td', canvas
-        $(tr).append  td
-      table.append  tr
-    table.find('canvas').click @when_button_pressed
-    @render()
-
   when_button_pressed: ( event ) =>
     canvas = event.currentTarget
     $(canvas).data 'code', selected_character_code
     @render_canvas  canvas
 
-  render: ->
-    @render_canvas canvas for canvas in @canvases
 
-  render_canvas: ( canvas ) ->
-    code = $(canvas).data 'code'
-    character = character_set.characters[ code]
-    canvas.getContext('2d').putImageData  character.image_data, 0, 0
+# A Tile Pattern is a matrix of character codes that can be applied to the
+# world map in one go.  In fact, the map is simply a matrix of tiles.
+#
+class TilePattern
+
+  width: 4 # characters
+  height: 4
+
+  constructor: ( @pattern_id ) ->
+    @canvas = elm 'canvas', width:8*TilePattern::width, height:8*TilePattern::height
+    @context = @canvas.getContext '2d'
+    $(@canvas).click @when_clicked
+
+  when_clicked: =>
+    tile_editor.selected_tile_pattern_id = @pattern_id
+    tile_editor.render()
+    $('#tile_palette_dialog').fadeOut 'fast'
+
+  address_of: ( row, column ) ->
+    base = TilePattern::width * TilePattern::height * @pattern_id
+    base + TilePattern::width * row + column
+
+  character_code_at: ( row, column ) ->
+    tile_palette.data[ @address_of row, column ]
+
+  paint: ( row, column, character_code ) ->
+    tile_palette.data[ @address_of row, column ] = character_code
+
+  render: ->
+    for row in [0..TilePattern::height-1]
+      for column in [0..TilePattern::width-1]
+        character = character_set.characters[ @character_code_at  row, column ]
+        @canvas.getContext('2d').drawImage  character.internal_canvas, 8*column, 8*row
+
+
+class TilePalette
+
+  constructor: ->
+    @patterns = []
+    @data = new Array TilePattern::width*TilePattern::height*256 # Array of bytes
+    # All patterns should initially refer to character code 0
+    for i in [0..@data.length-1]
+      @data[ i] = 0
+    # Make 16 rows each with 16 <canvas> elements, one for each tile pattern
+    for row in [0..15]
+      row_div = elm 'div', {}
+      for column in [0..15]
+        pattern_id = 16* row+ column
+        pt = new TilePattern( pattern_id)
+        @patterns.push  pt
+        row_div.appendChild  pt.canvas
+      $('#tile_palette').append row_div
+
+  render: ->
+    pt.render() for pt in @patterns
+
+
+class TileEditor
+
+  constructor: ->
+    for row in [0..TilePattern::height-1]
+      row_div = elm 'div', {}
+      for column in [0..TilePattern::width-1]
+        canvas = elm 'canvas', width:TilePattern::width*scale*2, height:TilePattern::height*scale*2
+        $(canvas).data 'row_within_tile', row
+        $(canvas).data 'column_within_tile', column
+        $(canvas).click @when_cell_clicked
+        row_div.appendChild  canvas
+      $('#tile_editor').append row_div
+      @selected_tile_pattern_id = 0
+    @render()
+
+  when_cell_clicked: ( event ) =>
+    # Apply the currently selected character code to the currently selected
+    # tile at the cell clicked
+    canvas = event.currentTarget
+    row = $(canvas).data 'row_within_tile'
+    column = $(canvas).data 'column_within_tile'
+    pattern = tile_palette.patterns[@selected_tile_pattern_id ]
+    pattern.paint  row, column, selected_character_code
+    @render()
+    tile_palette.render()
+    world.render()
+
+  render: ->
+    pattern = tile_palette.patterns[@selected_tile_pattern_id]
+    $('#tile_editor canvas').each ( i, canvas ) ->
+      row = $(canvas).data 'row_within_tile'
+      column = $(canvas).data 'column_within_tile'
+      character = character_set.characters[ pattern.character_code_at( row, column )]
+      canvas.getContext('2d').drawImage  character.internal_canvas, 0, 0, canvas.width, canvas.height
+
+
+class World
+
+  constructor: ->
+
+    @width = 32 # tiles
+    @height = 8 # tiles
+    @data = new Array @width* @height  # Array of bytes.  Begins with tile cell
+    # in upper-left then proceeds right across the world.  Each cell refers to
+    # a tile pattern
+    for y in [0..@height-1]
+      for x in [0..@width-1]
+        @paint x, y, 0
+
+    @view_width = 4
+    @view_height = 3
+    @view_x = 0
+    @view_y = 0
+    for row in [0..@view_height-1]
+      row_div = elm 'div', {}
+      for column in [0..@view_width-1]
+        canvas = elm 'canvas', width:8*4*scale, height:8*4*scale
+        $(canvas).click @when_cell_clicked
+        $(canvas).data 'column_within_view', column
+        $(canvas).data 'row_within_view', row
+        row_div.appendChild  canvas
+      $('#world').append  row_div
+    @render()
+
+  when_cell_clicked: ( event ) =>
+    canvas = $ event.currentTarget
+    x = @view_x+ canvas.data 'column_within_view'
+    y = @view_y+ canvas.data 'row_within_view'
+    @paint  x, y, tile_editor.selected_tile_pattern_id
+    @render()
+
+  # Invoked by tile_palette when a tile pattern is chosen
+  paint: ( x, y, tile_pattern_id ) ->
+    @data[ @width*y+ x] = tile_pattern_id
+
+  pan_view: ( direction ) ->
+    switch direction
+      when 'left' then if 0 < @view_x
+        @view_x -= 1
+      when 'right' then if @view_x < @width - @view_width
+        @view_x += 1
+      when 'up' then if 0 < @view_y
+        @view_y -= 1
+      when 'down' then if @view_y < @height - @view_height
+        @view_y += 1
+    @render()
+
+  render: ->
+    $('#world canvas').each ( i, canvas ) =>
+      x = @view_x+ $(canvas).data 'column_within_view'
+      y = @view_y+ $(canvas).data 'row_within_view'
+      pattern_id = @data[ @width*y+ x ]
+      pattern_canvas = tile_palette.patterns[ pattern_id].canvas
+      canvas.getContext('2d').drawImage  pattern_canvas, 0, 0, canvas.width, canvas.height
 
 
 class Animation
@@ -535,7 +676,7 @@ class Animation
   animate: =>
     character = character_set.characters[ @first_frame + @frame]
     if character
-      @canvas.getContext('2d').putImageData( character.image_data, 0, 0)
+      @canvas.getContext('2d').drawImage character.internal_canvas, 0, 0, @canvas.width, @canvas.height
       @frame += 1
       @frame = 0 if @frames_to_play <= @frame
 
@@ -546,9 +687,12 @@ $(document).ready () ->
 
   character_set = new CharacterSet()
   editor = new Editor()
-  macro = new Macro()
+  color_palette = new ColorPalette()
+  tile_palette = new TilePalette()
+  tile_palette.render()
+  tile_editor = new TileEditor()
+  world = new World()
   animate = new Animation()
-  palette = new Palette()
 
   # When multi-color mode is selected:
   #  + Background colors 1 and 2 should be revealed
@@ -564,7 +708,6 @@ $(document).ready () ->
     fill_out_data()
     character_set.render()
     editor.build()
-    macro.render()
 
   $('#upload_button').click () ->
     $('#upload_dialog').fadeIn 'fast'
@@ -590,11 +733,16 @@ $(document).ready () ->
   K_1      = 49
   K_2      = 50
   K_3      = 51
+  K_A =      65
   K_C =      67
+  K_D =      68
+  K_F =      70
   K_H =      72
   K_L =      76
   K_S =      83
+  K_T =      84
   K_V =      86
+  K_W =      87
   $('body').keyup ( event) ->
     switch event.which
       when K_H then $('#help_dialog').fadeToggle 'fast'
@@ -604,8 +752,13 @@ $(document).ready () ->
       when K_3 then editor.choose_brush 3 if mode.color_mode is 'multi-color'
       when K_C then copy_from_index = selected_character_code
       when K_V then selected_character().copy_from  copy_from_index
-      when K_S then localStorage["data"] = JSON.stringify( data )
+      when K_F then localStorage["data"] = JSON.stringify( data ); console.log 'Saved'
       when K_L then data = JSON.parse localStorage["data"]; render_everything()
+      when K_T then $('#tile_palette_dialog').fadeIn 'fast'
+      when K_W then world.pan_view 'up'
+      when K_A then world.pan_view 'left'
+      when K_S then world.pan_view 'down'
+      when K_D then world.pan_view 'right'
       when K_UP then selected_character().slide 'up'
       when K_DOWN then selected_character().slide 'down'
       when K_LEFT then selected_character().slide 'left'
