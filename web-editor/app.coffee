@@ -8,14 +8,12 @@
 #   - Hi-res overlays
 # - Reduce clutter: Remove Upload, Download and hires/muco mode selection UI since don't need it all the time
 # - save and restore ( as JSON) the "state" ( which colors are selected, etc.)
-# - Anim problem: bases animation from selected index, so can't edit frame#2 and see animation
 # - Be able to select a sequence of frames for animation such as $6, $7, $8, $7
 # - In Sprite mode, could use the last ( unused) byte of each 64-byte block to store the changeable color
 # - In Character mode, only color IDs 0..7 may be chosen for the changeable color since the MSB of the Color RAM nybble is used to select hi-res character: 0:hi-res, 1:muco
 # - Remember for each character and sprite whether it's intended for display as hi-res or multi-color
 
 # - copy range of entities
-# - palette_dialog in its own class
 
 
 # FEATURES
@@ -529,12 +527,13 @@ class Animation
       # number of frames to play was reduced)
       parsed = parseInt $(event.currentTarget).val()
       @frames_to_play = if isNaN( parsed) then 0 else parsed
+      @first_frame = selected_character_code
       @frame = 0
     fps = 5
     setInterval @animate, 1000/fps
 
   animate: =>
-    character = character_set.characters[ selected_character_code + @frame]
+    character = character_set.characters[ @first_frame + @frame]
     if character
       @canvas.getContext('2d').putImageData( character.image_data, 0, 0)
       @frame += 1
