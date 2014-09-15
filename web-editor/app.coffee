@@ -411,7 +411,7 @@ class Editor
     $('#editor').find('tr').each ( row, tr ) ->
       $(tr).children().each ( column, td ) ->
         $(td).css 'background-color', Color::for_pixel_value( selected_character().pixel_at  row, column ).hex
-    $('#color_sources >div').each ( pixel_value, div ) ->
+    $('#color_sources >div:visible').each ( pixel_value, div ) ->
       $(div).css 'background-color', Color::for_pixel_value( pixel_value).hex
 
 
@@ -535,7 +535,9 @@ $(document).ready () ->
       else
         dlg = $ '#palette_dialog'
         # Tell the palette which color source it's manipulating
-        dlg.data 'pixel_value', i
+        # In hi-res mode, div#3 relates to pixel_value:1 but in multi-color
+        # mode, div#3 relates to pixel_value:3
+        dlg.data 'pixel_value', if mode.color_mode is 'hi-res' then i / 3 else i
         dlg.fadeIn 'fast'
 
   # When multi-color mode is selected:
