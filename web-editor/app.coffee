@@ -15,9 +15,7 @@
 # - Remember for each character and sprite whether it's intended for display as hi-res or multi-color
 
 # - copy range of entities
-# - bit limited, but remember changeable color for each entity and apply that color when painting on the macro
 # - palette_dialog in its own class
-# - when select char, changeable color should update
 
 
 # FEATURES
@@ -349,7 +347,8 @@ class Editor
 
   constructor: ->
     @build()
-    @brush = 1 # @brush remembers whether to paint with foreground or background pixels
+    # When the page first loads, the color on the brush should be evident
+    @choose_brush 1 # @brush remembers whether to paint with foreground or background pixels
 
   build: ->
     # The number of rows and columns change with the mode:
@@ -374,7 +373,24 @@ class Editor
         $(tr).append  td
       table.append  tr
     table.find('td').mousedown(@when_button_pressed).mouseup @when_button_released
+    # Background colors #1 and #2 should only be shown in multi-color mode
+    switch mode.color_mode
+      when 'hi-res' then $('.multi-color').fadeOut 'fast'
+      when 'multi-color' then $('.multi-color').fadeIn 'fast'
+    # Assign pixel values to each color source
+    $('#color_sources >div').each ( i, div ) ->
+      $(div).data 'pixel_value', if mode.color_mode is 'multi-color' or i < 3 then i else 1
     @render()
+
+  choose_brush: ( pixel_value ) ->
+    @brush = pixel_value
+    # The chosen color source should indicate that it is selected
+    $('#color_sources >div').each ( i, div ) ->
+      div = $ div
+      if div.data('pixel_value') is pixel_value
+        div.addClass 'on_brush'
+      else
+        div.removeClass 'on_brush'
 
   coordinates_from: ( event) ->
     td = $(event.currentTarget)
@@ -516,28 +532,19 @@ $(document).ready () ->
     render_everything()
     dlg.fadeOut 'fast'
 
-  select_color_source = ( pixel_value, div ) ->
-    editor.brush = pixel_value
-    source_divs = $('#color_sources >div')
-    source_divs.removeClass 'on_brush'
-    $(source_divs[ pixel_value]).addClass 'on_brush'
-
-  # When the page first loads, the color on the brush should be evident
-  select_color_source  editor.brush
-
   # When a color source is selected, the brush should be dipped in to that color
   $('#color_sources >div').each ( i, div ) ->
     $(div).click () ->
       # If the source clicked is already selected then choose the color from
       # the palette
       if editor.brush isnt i
-        select_color_source  i
+        editor.choose_brush  i
       else
         dlg = $ '#palette_dialog'
         # Tell the palette which color source it's manipulating
         # In hi-res mode, div#3 relates to pixel_value:1 but in multi-color
         # mode, div#3 relates to pixel_value:3
-        dlg.data 'pixel_value', if mode.color_mode is 'hi-res' then i / 3 else i
+        dlg.data 'pixel_value', $(div).data('pixel_value')
         dlg.fadeIn 'fast'
 
   # When multi-color mode is selected:
@@ -549,10 +556,6 @@ $(document).ready () ->
       switch input.name
         when 'asset' then asset_mode = input.value
         when 'colors' then color_mode = input.value
-    # Background colors #1 and #2 should only be shown in multi-color mode
-    switch color_mode
-      when 'hi-res' then $('.multi-color').fadeOut 'fast'
-      when 'multi-color' then $('.multi-color').fadeIn 'fast'
     mode = MODE[ asset_mode][ color_mode]
 
     fill_out_data()
@@ -592,10 +595,10 @@ $(document).ready () ->
   $('body').keyup ( event) ->
     switch event.which
       when K_H then $('#help_dialog').fadeToggle 'fast'
-      when K_0 then select_color_source 0
-      when K_1 then select_color_source 1
-      when K_2 then select_color_source 2
-      when K_3 then select_color_source 3
+      when K_0 then editor.choose_brush 0
+      when K_1 then editor.choose_brush 1
+      when K_2 then editor.choose_brush 2 if mode.color_mode is 'multi-color'
+      when K_3 then editor.choose_brush 3 if mode.color_mode is 'multi-color'
       when K_C then copy_from_index = selected_character_code
       when K_V then selected_character().copy_from  copy_from_index
       when K_S then localStorage["data"] = JSON.stringify( data )
