@@ -13,6 +13,8 @@
 # - remove all use of <table> since <div> of <canvas> works nicely
 # - Use mouse to position cursor but then use KEYS to paint in the various
 #   colors, eliminates "mode" of selected color
+# - copy and paste should copy the changeable color too
+# - should be able to choose different shared colors #1 and #2 in sprite mode
 
 
 # FEATURES
@@ -622,6 +624,9 @@ class World
     @paint  x, y, tile_editor.selected_tile_design_id
     @render()
 
+  tile_design_id_at: ( x, y ) ->
+    @data[ @width*y+ x]
+
   # Invoked by tile_palette when a tile design is chosen
   paint: ( x, y, tile_design_id ) ->
     @data[ @width*y+ x] = tile_design_id
@@ -645,6 +650,13 @@ class World
       design_id = @data[ @width*y+ x ]
       design_canvas = tile_palette.designs[ design_id].canvas
       canvas.getContext('2d').drawImage  design_canvas, 0, 0, canvas.width, canvas.height
+      $(canvas).data('wx', x).data 'wy', y
+
+  choose_tile: ->
+    tile_canvas = $ '#world canvas:hover'
+    [ x, y ] = ( tile_canvas.data k for k in ['wx', 'wy'])
+    tile_palette.designs[ @tile_design_id_at x, y ].when_clicked()
+    tile_editor.render()
 
 
 class Animation
@@ -747,6 +759,7 @@ $(document).ready () ->
   K_C =      67
   K_D =      68
   K_F =      70
+  K_G =      71
   K_H =      72
   K_L =      76
   K_S =      83
@@ -762,9 +775,8 @@ $(document).ready () ->
       when K_3 then editor.choose_brush 3 if mode.color_mode is 'multi-color'
       when K_C then copy_from_index = selected_character_code
       when K_V then selected_character().copy_from  copy_from_index
-      when K_F then save_to_local_storage()
-      when K_L then load_from_local_storage()
       when K_T then $('#tile_palette_dialog').fadeIn 'fast'
+      when K_G then world.choose_tile()
       when K_W then world.pan_view 'up'
       when K_A then world.pan_view 'left'
       when K_S then world.pan_view 'down'
@@ -774,6 +786,8 @@ $(document).ready () ->
       when K_LEFT then selected_character().slide 'left'
       when K_RIGHT then selected_character().slide 'right'
       when K_DELETE then selected_character().blank()
+      when K_F then save_to_local_storage()
+      when K_L then load_from_local_storage()
       else
         console.log 'Key released:', event.which
 
