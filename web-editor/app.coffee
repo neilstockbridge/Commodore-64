@@ -18,7 +18,7 @@
 #   colors, eliminates "mode" of selected color
 
 
-# - save changeable colors to localStorage
+# - Close button on Download dialog doesn't work.  suspect click handler binds to find with id.  need class instead
 
 
 # FEATURES
@@ -46,20 +46,11 @@ class Color
   background_color: 0
   shared_color_1: 9
   shared_color_2: 8
-  # FIXME: Or load from localStorage:
-  # When this object is constructed, the changeable color should either be a
-  # default, or be pulled from localStorage for this character
-  prepare_id_for: ->
-    loaded = localStorage["changeable_colors"]
-    if loaded?
-      JSON.parse loaded
-    else
-      m = {'charset':{}, 'sprites':{}}
-      for i in [0..255]
-        m['charset'][i] = 10
-        m['sprites'][i] = 10
-      m
-  id_for: Color::prepare_id_for()
+  id_for: {'charset':{}, 'sprites':{}}
+  for i in [0..255]
+    Color::id_for['charset'][i] = 10
+    Color::id_for['sprites'][i] = 10
+
 
   # @param  hex  Example: '#68372B'
   constructor: ( @hex ) ->
@@ -509,27 +500,27 @@ class ColorPalette
     @render_canvas  canvas
 
 
-# A Tile Pattern is a matrix of character codes that can be applied to the
+# A Tile Design is a matrix of character codes that can be applied to the
 # world map in one go.  In fact, the map is simply a matrix of tiles.
 #
-class TilePattern
+class TileDesign
 
   width: 4 # characters
   height: 4
 
-  constructor: ( @pattern_id ) ->
-    @canvas = elm 'canvas', width:8*TilePattern::width, height:8*TilePattern::height
+  constructor: ( @design_id ) ->
+    @canvas = elm 'canvas', width:8*TileDesign::width, height:8*TileDesign::height
     @context = @canvas.getContext '2d'
     $(@canvas).click @when_clicked
 
   when_clicked: =>
-    tile_editor.selected_tile_pattern_id = @pattern_id
+    tile_editor.selected_tile_design_id = @design_id
     tile_editor.render()
     $('#tile_palette_dialog').fadeOut 'fast'
 
   address_of: ( row, column ) ->
-    base = TilePattern::width * TilePattern::height * @pattern_id
-    base + TilePattern::width * row + column
+    base = TileDesign::width * TileDesign::height * @design_id
+    base + TileDesign::width * row + column
 
   character_code_at: ( row, column ) ->
     tile_palette.data[ @address_of row, column ]
@@ -538,8 +529,8 @@ class TilePattern
     tile_palette.data[ @address_of row, column ] = character_code
 
   render: ->
-    for row in [0..TilePattern::height-1]
-      for column in [0..TilePattern::width-1]
+    for row in [0..TileDesign::height-1]
+      for column in [0..TileDesign::width-1]
         character = character_set.characters[ @character_code_at  row, column ]
         @canvas.getContext('2d').drawImage  character.internal_canvas, 8*column, 8*row
 
@@ -547,38 +538,38 @@ class TilePattern
 class TilePalette
 
   constructor: ->
-    @patterns = []
-    @data = new Array TilePattern::width*TilePattern::height*256 # Array of bytes
-    # All patterns should initially refer to character code 0
+    @designs = []
+    @data = new Array TileDesign::width*TileDesign::height*256 # Array of bytes
+    # All designs should initially refer to character code 0
     for i in [0..@data.length-1]
       @data[ i] = 0
-    # Make 16 rows each with 16 <canvas> elements, one for each tile pattern
+    # Make 16 rows each with 16 <canvas> elements, one for each tile design
     for row in [0..15]
       row_div = elm 'div', {}
       for column in [0..15]
-        pattern_id = 16* row+ column
-        pt = new TilePattern( pattern_id)
-        @patterns.push  pt
+        design_id = 16* row+ column
+        pt = new TileDesign( design_id)
+        @designs.push  pt
         row_div.appendChild  pt.canvas
       $('#tile_palette').append row_div
 
   render: ->
-    pt.render() for pt in @patterns
+    pt.render() for pt in @designs
 
 
 class TileEditor
 
   constructor: ->
-    for row in [0..TilePattern::height-1]
+    for row in [0..TileDesign::height-1]
       row_div = elm 'div', {}
-      for column in [0..TilePattern::width-1]
-        canvas = elm 'canvas', width:TilePattern::width*scale*2, height:TilePattern::height*scale*2
+      for column in [0..TileDesign::width-1]
+        canvas = elm 'canvas', width:TileDesign::width*scale*2, height:TileDesign::height*scale*2
         $(canvas).data 'row_within_tile', row
         $(canvas).data 'column_within_tile', column
         $(canvas).click @when_cell_clicked
         row_div.appendChild  canvas
       $('#tile_editor').append row_div
-      @selected_tile_pattern_id = 0
+      @selected_tile_design_id = 0
     @render()
 
   when_cell_clicked: ( event ) =>
@@ -587,18 +578,18 @@ class TileEditor
     canvas = event.currentTarget
     row = $(canvas).data 'row_within_tile'
     column = $(canvas).data 'column_within_tile'
-    pattern = tile_palette.patterns[@selected_tile_pattern_id ]
-    pattern.paint  row, column, selected_character_code
+    design = tile_palette.designs[@selected_tile_design_id ]
+    design.paint  row, column, selected_character_code
     @render()
     tile_palette.render()
     world.render()
 
   render: ->
-    pattern = tile_palette.patterns[@selected_tile_pattern_id]
+    design = tile_palette.designs[@selected_tile_design_id]
     $('#tile_editor canvas').each ( i, canvas ) ->
       row = $(canvas).data 'row_within_tile'
       column = $(canvas).data 'column_within_tile'
-      character = character_set.characters[ pattern.character_code_at( row, column )]
+      character = character_set.characters[ design.character_code_at( row, column )]
       canvas.getContext('2d').drawImage  character.internal_canvas, 0, 0, canvas.width, canvas.height
 
 
@@ -610,12 +601,12 @@ class World
     @height = 8 # tiles
     @data = new Array @width* @height  # Array of bytes.  Begins with tile cell
     # in upper-left then proceeds right across the world.  Each cell refers to
-    # a tile pattern
+    # a tile design
     for y in [0..@height-1]
       for x in [0..@width-1]
         @paint x, y, 0
 
-    @view_width = 4
+    @view_width = 5
     @view_height = 3
     @view_x = 0
     @view_y = 0
@@ -634,12 +625,12 @@ class World
     canvas = $ event.currentTarget
     x = @view_x+ canvas.data 'column_within_view'
     y = @view_y+ canvas.data 'row_within_view'
-    @paint  x, y, tile_editor.selected_tile_pattern_id
+    @paint  x, y, tile_editor.selected_tile_design_id
     @render()
 
-  # Invoked by tile_palette when a tile pattern is chosen
-  paint: ( x, y, tile_pattern_id ) ->
-    @data[ @width*y+ x] = tile_pattern_id
+  # Invoked by tile_palette when a tile design is chosen
+  paint: ( x, y, tile_design_id ) ->
+    @data[ @width*y+ x] = tile_design_id
 
   pan_view: ( direction ) ->
     switch direction
@@ -657,9 +648,9 @@ class World
     $('#world canvas').each ( i, canvas ) =>
       x = @view_x+ $(canvas).data 'column_within_view'
       y = @view_y+ $(canvas).data 'row_within_view'
-      pattern_id = @data[ @width*y+ x ]
-      pattern_canvas = tile_palette.patterns[ pattern_id].canvas
-      canvas.getContext('2d').drawImage  pattern_canvas, 0, 0, canvas.width, canvas.height
+      design_id = @data[ @width*y+ x ]
+      design_canvas = tile_palette.designs[ design_id].canvas
+      canvas.getContext('2d').drawImage  design_canvas, 0, 0, canvas.width, canvas.height
 
 
 class Animation
@@ -730,6 +721,24 @@ $(document).ready () ->
   $('#close_button').click () ->
     $('.dialog').fadeOut 'fast'
 
+  save_to_local_storage = ->
+    save = ( data, name ) ->
+      localStorage[ name] = JSON.stringify( data )
+    save  data, 'data'
+    save  Color::id_for, 'changeable_colors'
+    save  tile_palette.data, 'tile_design_data'
+    save  world.data, 'world_data'
+    console.log 'Saved'
+
+  load_from_local_storage = ->
+    load = ( name ) ->
+      JSON.parse localStorage[ name ]
+    data = load 'data'
+    Color::id_for = load 'changeable_colors'
+    tile_palette.data = load 'tile_design_data'
+    world.data = load 'world_data'
+    render_everything()
+
   # Hotkeys
   K_LEFT =   37
   K_UP =     38
@@ -759,8 +768,8 @@ $(document).ready () ->
       when K_3 then editor.choose_brush 3 if mode.color_mode is 'multi-color'
       when K_C then copy_from_index = selected_character_code
       when K_V then selected_character().copy_from  copy_from_index
-      when K_F then localStorage['data'] = JSON.stringify( data ); localStorage['changeable_colors'] = JSON.stringify( Color::id_for ); console.log 'Saved'
-      when K_L then data = JSON.parse localStorage["data"]; render_everything()
+      when K_F then save_to_local_storage()
+      when K_L then load_from_local_storage()
       when K_T then $('#tile_palette_dialog').fadeIn 'fast'
       when K_W then world.pan_view 'up'
       when K_A then world.pan_view 'left'
