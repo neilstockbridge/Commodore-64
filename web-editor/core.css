@@ -120,7 +120,7 @@ legend { padding: 0  0.2em }
 
 #help_dialog { min-width: 50% }
 
-#close_button, #really_upload_button {
+.close_button, #really_upload_button {
   float: right;
 }
 

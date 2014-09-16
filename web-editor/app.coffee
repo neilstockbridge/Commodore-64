@@ -1,13 +1,10 @@
 
 # PLAN:
 # + indicate visually on the charset grid which character is selected
-# + tile editor for assembling 4x4 tiles and then map editor
-#   - be able to select (changeable) color when painting characters on tiles
 # - mirror, flip
 # - In Sprite mode:
 #   - Hi-res overlays
 # - Reduce clutter: Remove Upload, Download and hires/muco mode selection UI since don't need it all the time
-# - save and restore ( as JSON) the "state" ( which colors are selected, etc.)
 # - Be able to select a sequence of frames for animation such as $6, $7, $8, $7
 # - In Sprite mode, could use the last ( unused) byte of each 64-byte block to store the changeable color
 # - In Character mode, only color IDs 0..7 may be chosen for the changeable color since the MSB of the Color RAM nybble is used to select hi-res character: 0:hi-res, 1:muco
@@ -16,9 +13,6 @@
 # - remove all use of <table> since <div> of <canvas> works nicely
 # - Use mouse to position cursor but then use KEYS to paint in the various
 #   colors, eliminates "mode" of selected color
-
-
-# - Close button on Download dialog doesn't work.  suspect click handler binds to find with id.  need class instead
 
 
 # FEATURES
@@ -718,7 +712,7 @@ $(document).ready () ->
     $('#download_dialog textarea').val  character_set.export()
     $('#download_dialog').fadeIn 'fast'
 
-  $('#close_button').click () ->
+  $('.close_button').click () ->
     $('.dialog').fadeOut 'fast'
 
   save_to_local_storage = ->
