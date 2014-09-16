@@ -724,8 +724,10 @@ $(document).ready () ->
     $('#download_dialog textarea').val  character_set.export()
     $('#download_dialog').fadeIn 'fast'
 
-  $('.close_button').click () ->
+  close_dialog = ->
     $('.dialog').fadeOut 'fast'
+
+  $('.close_button').click  close_dialog
 
   save_to_local_storage = ->
     save = ( data, name ) ->
@@ -746,6 +748,7 @@ $(document).ready () ->
     render_everything()
 
   # Hotkeys
+  K_ESCAPE = 27
   K_LEFT =   37
   K_UP =     38
   K_RIGHT =  39
@@ -788,6 +791,7 @@ $(document).ready () ->
       when K_DELETE then selected_character().blank()
       when K_F then save_to_local_storage()
       when K_L then load_from_local_storage()
+      when K_ESCAPE then close_dialog()
       else
         console.log 'Key released:', event.which
 
