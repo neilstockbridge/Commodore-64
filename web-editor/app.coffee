@@ -17,7 +17,6 @@
 # - should be able to choose different shared colors #1 and #2 in sprite mode
 # - copy and paste should use hover target rather than selected character
 # - bug: try noticing mouseOut in the editor and picking up the brush
-# - should be able to export tile design and map data
 
 
 # FEATURES
@@ -770,7 +769,7 @@ $(document).ready () ->
   load_from_local_storage = ->
     load = ( name ) ->
       JSON.parse localStorage[ name ]
-    data = load 'data'
+    character_set.data = load 'data'
     Color::id_for = load 'changeable_colors'
     tile_palette.data = load 'tile_design_data'
     world.data = load 'world_data'
