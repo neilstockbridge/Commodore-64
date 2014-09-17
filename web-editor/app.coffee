@@ -15,6 +15,9 @@
 #   colors, eliminates "mode" of selected color
 # - copy and paste should copy the changeable color too
 # - should be able to choose different shared colors #1 and #2 in sprite mode
+# - copy and paste should use hover target rather than selected character
+# - bug: try noticing mouseOut in the editor and picking up the brush
+# - should be able to export tile design and map data
 
 
 # FEATURES
@@ -410,6 +413,11 @@ class Editor
       else
         div.removeClass 'on_brush'
 
+  # Applies the background brush to the pixel under the cursor
+  blank: ( td ) ->
+    [ row, column ] = ($(td).data k for k in ['row','column'])
+    @paint row, column, 0
+
   coordinates_from: ( event) ->
     td = $(event.currentTarget)
     [ td.data('row'), td.data('column') ]
@@ -435,8 +443,8 @@ class Editor
   when_button_released: ( event) =>
     $('#editor').find('td').off 'mousemove'
 
-  paint: ( row, column) =>
-    selected_character().set_pixel  row, column, @brush
+  paint: ( row, column, brush=@brush) =>
+    selected_character().set_pixel  row, column, brush
     @render()
     selected_character().render()
     tile_palette.render()
@@ -569,13 +577,18 @@ class TileEditor
     @render()
 
   when_cell_clicked: ( event ) =>
+    @paint event.currentTarget, selected_character_code
+
+  blank: ( canvas ) ->
+    @paint canvas, 0
+
+  paint: ( canvas, character_code ) ->
     # Apply the currently selected character code to the currently selected
     # tile at the cell clicked
-    canvas = event.currentTarget
     row = $(canvas).data 'row_within_tile'
     column = $(canvas).data 'column_within_tile'
     design = tile_palette.designs[@selected_tile_design_id ]
-    design.paint  row, column, selected_character_code
+    design.paint  row, column, character_code
     @render()
     tile_palette.render()
     world.render()
@@ -618,16 +631,21 @@ class World
     @render()
 
   when_cell_clicked: ( event ) =>
-    canvas = $ event.currentTarget
-    x = @view_x+ canvas.data 'column_within_view'
-    y = @view_y+ canvas.data 'row_within_view'
-    @paint  x, y, tile_editor.selected_tile_design_id
+    canvas = event.currentTarget
+    @apply_design  canvas, tile_editor.selected_tile_design_id
+
+  blank: ( canvas ) ->
+    @apply_design  canvas, 0
+
+  apply_design: ( canvas, tile_design_id ) ->
+    x = @view_x+ $(canvas).data 'column_within_view'
+    y = @view_y+ $(canvas).data 'row_within_view'
+    @paint  x, y, tile_design_id
     @render()
 
   tile_design_id_at: ( x, y ) ->
     @data[ @width*y+ x]
 
-  # Invoked by tile_palette when a tile design is chosen
   paint: ( x, y, tile_design_id ) ->
     @data[ @width*y+ x] = tile_design_id
 
@@ -747,6 +765,17 @@ $(document).ready () ->
     world.data = load 'world_data'
     render_everything()
 
+  blank = ->
+    # Work out whether the mouse is hovering over the character editor, the
+    # tile editor or the world map editor
+    on_character = $ '#editor td:hover'
+    on_tile = $ '#tile_editor canvas:hover'
+    on_world_map = $ '#world canvas:hover'
+    editor.blank  on_character[0] if on_character.length != 0
+    tile_editor.blank  on_tile[0] if on_tile.length != 0
+    world.blank  on_world_map[0] if on_world_map.length != 0
+    #console.log tile_canvas.length, character.length, pixel.length
+
   # Hotkeys
   K_ESCAPE = 27
   K_LEFT =   37
@@ -769,6 +798,7 @@ $(document).ready () ->
   K_T =      84
   K_V =      86
   K_W =      87
+  K_X =      88
   $('body').keyup ( event) ->
     switch event.which
       when K_H then $('#help_dialog').fadeToggle 'fast'
@@ -776,6 +806,7 @@ $(document).ready () ->
       when K_1 then editor.choose_brush 1
       when K_2 then editor.choose_brush 2 if mode.color_mode is 'multi-color'
       when K_3 then editor.choose_brush 3 if mode.color_mode is 'multi-color'
+      when K_X then blank()
       when K_C then copy_from_index = selected_character_code
       when K_V then selected_character().copy_from  copy_from_index
       when K_T then $('#tile_palette_dialog').fadeIn 'fast'
