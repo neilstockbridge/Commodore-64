@@ -142,20 +142,6 @@ render_everything = () ->
   tile_editor.render()
   world.render()
 
-# Rather than have structures that reflect character and sprite geometries, the
-# backing data is kept as a single Array of byte ( each represented as a Number
-# between 0 and 255), 16384 entries long ( for 256 64-byte sprites), in much
-# the same format as the C64 itself uses.  This is because a single character
-# set or sprite sheet may contain both hi-res and multi-color elements with no
-# record of which is which, so this tool could not possibly export the data
-# unless it was already in the format expected by the C64.
-#
-data = []
-fill_out_data = ->
-  # Ensure that data[] is filled with 0s rather than undefined values
-  last_byte = mode.entity_stride * 256 - 1
-  data[ address] ||= 0 for address in [0..last_byte]
-
 selected_character_code = 0
 selected_character = ->
   character_set.characters[ selected_character_code ]
@@ -221,12 +207,12 @@ class Character
 
   pixel_at: ( row, column ) ->
     [ address, shift, mask ] = @directions_to  row, column
-    ( data[address] & mask ) >> shift & mode.mask()
+    ( character_set.data[address] & mask ) >> shift & mode.mask()
 
   # @param  color  0..3
   set_pixel: ( row, column, pixel_value ) ->
     [ address, shift, mask ] = @directions_to  row, column
-    data[address] = data[address] & ~mask | pixel_value << shift
+    character_set.data[address] = character_set.data[address] & ~mask | pixel_value << shift
 
   # Provides the memory address of the byte that controls the pixel at the
   # specified row and column along with the shift required to being the pixel
@@ -268,7 +254,7 @@ class Character
     to_base = mode.entity_stride * @code
     for row in [0..mode.entity_height-1]
       for ofs in [0..mode.row_stride-1]
-        data[ to_base+ mode.row_stride*row+ ofs] = data[ from_base+ mode.row_stride*row+ ofs]
+        character_set.data[ to_base+ mode.row_stride*row+ ofs] = character_set.data[ from_base+ mode.row_stride*row+ ofs]
     render_everything()
 
   slide: ( direction) ->
@@ -281,39 +267,48 @@ class Character
         for ofs in [0..row_stride-1]
           # Remember the contents of the first row because it is about to be
           # overwitten by the contents of the second row
-          remember = data[ address+ ofs]
+          remember = character_set.data[ address+ ofs]
           for row in [0..last_row_index]
-            data[ address+ row_stride*row+ ofs] = if row < last_row_index then data[ address+ row_stride*(row+1)+ ofs] else remember
+            character_set.data[ address+ row_stride*row+ ofs] = if row < last_row_index then character_set.data[ address+ row_stride*(row+1)+ ofs] else remember
       when 'down'
         for ofs in [0..row_stride-1]
           # Remember the contents of the last row
-          remember = data[ address+ row_stride*last_row_index+ ofs]
+          remember = character_set.data[ address+ row_stride*last_row_index+ ofs]
           for row in [last_row_index..0]
-            data[ address+ row_stride*row+ ofs] = if 0 < row then data[ address+ row_stride*(row-1)+ ofs] else remember
+            character_set.data[ address+ row_stride*row+ ofs] = if 0 < row then character_set.data[ address+ row_stride*(row-1)+ ofs] else remember
       when 'left'
         for row in [0..last_row_index]
           base = address+ row_stride* row
           # Grab the most significant pixel ready to feed in to the least
           # significant byte
-          [ ignore, ousted ] = mode.rotate_left  data[ base+ 0]
+          [ ignore, ousted ] = mode.rotate_left  character_set.data[ base+ 0]
           for ofs in [row_stride-1..0]
-            [ rotated, ousted ] = mode.rotate_left  data[ base+ ofs], ousted
-            data[ base+ ofs] = rotated
+            [ rotated, ousted ] = mode.rotate_left  character_set.data[ base+ ofs], ousted
+            character_set.data[ base+ ofs] = rotated
       when 'right'
         for row in [0..last_row_index]
           base = address+ row_stride* row
           # Grab the least significant pixel ready to feed in to the most
           # significant byte
-          [ ignore, ousted ] = mode.rotate_right  data[ base+ row_stride-1]
+          [ ignore, ousted ] = mode.rotate_right  character_set.data[ base+ row_stride-1]
           for ofs in [0..row_stride-1]
-            [ rotated, ousted ] = mode.rotate_right  data[ base+ ofs], ousted
-            data[ base+ ofs] = rotated
+            [ rotated, ousted ] = mode.rotate_right  character_set.data[ base+ ofs], ousted
+            character_set.data[ base+ ofs] = rotated
     render_everything()
 
 
 class CharacterSet
 
   constructor: ->
+    # Rather than have structures that reflect character and sprite geometries, the
+    # backing data is kept as a single Array of byte ( each represented as a Number
+    # between 0 and 255), 16384 entries long ( for 256 64-byte sprites), in much
+    # the same format as the C64 itself uses.  This is because a single character
+    # set or sprite sheet may contain both hi-res and multi-color elements with no
+    # record of which is which, so this tool could not possibly export the data
+    # unless it was already in the format expected by the C64.
+    #
+    @data = []
     @characters = [] # Array[0..255] of Character objects by character code
     # Build the grid for the character set / sprite sheet
     table = $('#charset')
@@ -328,7 +323,11 @@ class CharacterSet
         tr.append  td
       table.append  tr
     table.find('td').click @when_character_clicked
-    @render()
+
+  fill_out_data: ->
+    # Ensure that data[] is filled with 0s rather than undefined values
+    last_byte = mode.entity_stride * 256 - 1
+    @data[ address] ||= 0 for address in [0..last_byte]
 
   render: ->
     character.render() for character in @characters
@@ -339,15 +338,10 @@ class CharacterSet
     # The editor should show the newly selected character
     editor.render()
 
-  import_from: ( encoded_text) ->
-    data = Base64::decoded  encoded_text
-    render_everything()
-
-  export: ->
+  data_for_export: ->
     # If the user is editing a charset but switched to sprites mode and then
     # back then only 2K not 16K should be exported
-    to_export = if mode.asset_type is 'charset' and 2048 < data.length then data.slice 0, 2048 else data
-    "cat <<. | base64 -d > charset.bin\n"+ Base64::encoded( to_export )+ "\n.\n"
+    if mode.asset_type is 'charset' and 2048 < @data.length then @data.slice 0, 2048 else @data
 
 
 class Editor
@@ -560,6 +554,9 @@ class TilePalette
   render: ->
     pt.render() for pt in @designs
 
+  data_for_export: ->
+    @data
+
 
 class TileEditor
 
@@ -676,6 +673,9 @@ class World
     tile_palette.designs[ @tile_design_id_at x, y ].when_clicked()
     tile_editor.render()
 
+  data_for_export: ->
+    @data
+
 
 class Animation
 
@@ -705,9 +705,9 @@ class Animation
 
 $(document).ready () ->
 
-  fill_out_data()
-
   character_set = new CharacterSet()
+  character_set.fill_out_data()
+  character_set.render()
   editor = new Editor()
   color_palette = new ColorPalette()
   tile_palette = new TilePalette()
@@ -727,20 +727,31 @@ $(document).ready () ->
         when 'colors' then color_mode = input.value
     mode = MODE[ asset_mode][ color_mode]
 
-    fill_out_data()
+    character_set.fill_out_data()
     character_set.render()
     editor.build()
 
-  $('#upload_button').click () ->
-    $('#upload_dialog').fadeIn 'fast'
-
-  $('#really_upload_button').click () ->
-    character_set.import_from $('#upload_dialog textarea').val()
+  $('#really_upload_button').click ->
+    container = $(this).data 'container'
+    container.data = Base64::decoded $('#upload_dialog textarea').val()
+    render_everything()
     $('#upload_dialog').fadeOut 'fast'
 
-  $('#download_button').click () ->
-    $('#download_dialog textarea').val  character_set.export()
-    $('#download_dialog').fadeIn 'fast'
+  configure_import_and_export = ( import_button_id, export_button_id, container, filename ) ->
+    # When the Import button related to "container" is clicked..
+    $( import_button_id).click ->
+      # Give "container" to #really_upload_button
+      $('#really_upload_button').data 'container', container
+      $('#upload_dialog').fadeIn 'fast'
+
+    $( export_button_id).click ->
+      command = "cat <<. | base64 -d > #{filename}\n"+ Base64::encoded( container.data_for_export() )+ "\n.\n"
+      $('#download_dialog textarea').val  command
+      $('#download_dialog').fadeIn 'fast'
+
+  configure_import_and_export '#upload_button', '#download_button', character_set, 'charset.bin'
+  configure_import_and_export '#import_tiles_button', '#export_tiles_button', tile_palette, 'tile_designs.bin'
+  configure_import_and_export '#import_map_button', '#export_map_button', world, 'world_map.bin'
 
   close_dialog = ->
     $('.dialog').fadeOut 'fast'
@@ -774,7 +785,6 @@ $(document).ready () ->
     editor.blank  on_character[0] if on_character.length != 0
     tile_editor.blank  on_tile[0] if on_tile.length != 0
     world.blank  on_world_map[0] if on_world_map.length != 0
-    #console.log tile_canvas.length, character.length, pixel.length
 
   # Hotkeys
   K_ESCAPE = 27

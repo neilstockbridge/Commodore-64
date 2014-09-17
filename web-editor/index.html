@@ -57,6 +57,10 @@
     <div id="buttons">
       <input id="upload_button" type="button" value="Upload">
       <input id="download_button" type="button" value="Download">
+      <input id="import_tiles_button" type="button" value="Import Tiles">
+      <input id="export_tiles_button" type="button" value="Export Tiles">
+      <input id="import_map_button" type="button" value="Import Map">
+      <input id="export_map_button" type="button" value="Export Map">
     </div>
   </div>
 
@@ -102,7 +106,7 @@
 
   <div id="upload_dialog" class="dialog">
     <div>
-      <p>Do <tt>base64 &lt; charset.bin</tt> then paste the output here and press the Upload button</p>
+      <p>Do <tt>base64 &lt; filename.bin</tt> then paste the output here and press the Upload button</p>
       <!-- or dd status=noxfer if=/usr/lib/vice/C64/chargen bs=2K skip=1 2>/dev/null | base64 -->
       <textarea cols=80 rows=25></textarea>
       <input id="really_upload_button" type="button" value="Upload">
@@ -111,7 +115,7 @@
 
   <div id="download_dialog" class="dialog">
     <div>
-      <p>Paste this nonsense into your console window.  WARNING: Will destroy any file in the working directory named <tt>charset.bin</tt></p>
+      <p>Paste this nonsense into your console window.  WARNING: Will destroy any file in the working directory to which the output is redirected.</p>
       <textarea cols=80 rows=25></textarea>
       <input class="close_button" type="button" value="Close">
     </div>
