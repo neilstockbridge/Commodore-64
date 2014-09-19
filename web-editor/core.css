@@ -6,21 +6,29 @@ html * {
 }
 
 body {
-  padding: 1em;
+  padding: 0.5em 1em;
 }
-
-h1 { margin-bottom: 0.5em }
 
 p { margin-top: 0.5em; margin-bottom: 0.5em }
 
+ul { padding-left: 2em }
+li { margin-top: 0.7em; margin-bottom: 0.7em }
+
+dt, dd { padding-top: 0.3em }
 dt {
   float: left;
   clear: both;
+  width: 4em;
+  font-weight: bold;
 }
-dt { width: 4em; font-weight: bold }
-dd { white-space: no-wrap }
 
 td { line-height: 0 }
+
+textarea {
+  border: 0.1em solid #ccc;
+  position: relative; left: 1%;
+  width: 98%;
+}
 
 input[type=button] {
   padding: 0.4em 0.5em;
@@ -46,21 +54,31 @@ fieldset {
 
 legend { padding: 0  0.2em }
 
-#charset { display: inline-block }
+#charset { margin-bottom: 0.5em }
 #charset td { border: 0.1em solid black }
 #charset td:hover { border-color: white }
 
-#editor_box { display: inline-block; vertical-align: top; margin-left: 0.5em }
-
+#editor_box {
+  display: inline-block;
+  vertical-align: top;
+}
 #editor td { width: 32px; height: 16px }
 #editor.hi-res td { width: 16px }
 
-#editor_box p {
-  font-family: monospace
+#selected_character_code { vertical-align: top; font-family: monospace }
+#color_sources { display: inline-block; margin-left: 0.5em }
+#color_sources > div {
+  display: inline-block;
+  width: 0.8em;
+  height: 0.8em;
+  border: 0.2em solid #ccc;
+  cursor: pointer;
 }
+#color_sources >div.on_brush { border-bottom: none }
 
 #animation_section {
-  margin-top: 0.5em;
+  display: inline-block;
+  vertical-align: top;
 }
 #animation_section input {
   width: 2em;
@@ -68,24 +86,17 @@ legend { padding: 0  0.2em }
   background: #eee;
 }
 
-#buttons { display: inline-block; margin-top: 0.5em; vertical-align: top }
+#controls { display: inline-block; vertical-align: top }
+#buttons { margin: 0.7em }
 
 #mode { margin-left: 0.5em }
 #mode >div { margin: 0.1em  0.2em }
 
-#colors { display: inline-block; margin-top: 0.5em; float: right }
-#colors >div { text-align: right }
-#colors span { vertical-align: top; margin-right: 0.3em; color: #999; cursor: pointer }
-#colors span:hover { color: #333 }
-#colors span.on_brush { color: black }
-#colors table { display: inline-block }
-#colors td {
-  width: 1em;
-  height: 1em;
-}
-
-#charset, #editor, #macro, #colors table { border-collapse: collapse }
-#editor td:hover, #colors td:hover, #macro canvas:hover { box-shadow: 0 0 0.3em }
+#tile_editor, #world { display: inline-block }
+#editor td, #tile_palette canvas, #tile_editor canvas, #world canvas { opacity: 0.9 }
+#editor td:hover, #tile_palette canvas:hover, #tile_editor canvas:hover, #world canvas:hover { opacity: 1 }
+#tile_editor { vertical-align: top }
+#charset, #editor { border-collapse: collapse }
 
 .dialog {
   position: absolute; top: 10%; left: 50%;
@@ -101,15 +112,15 @@ legend { padding: 0  0.2em }
   box-shadow: 0 0 0.4em -0.2em;
 }
 
+#palette_dialog table { display: inline-block; margin-right: 1em }
+#palette_dialog td { width: 1em; height: 1em }
+#palette_dialog td.color { cursor: pointer }
+
+#tile_palette >div, #tile_editor >div, #world >div { line-height: 0; white-space: nowrap }
+
 #help_dialog { min-width: 50% }
 
-textarea {
-  border: 0.1em solid #ccc;
-  position: relative; left: 1%;
-  width: 98%;
-}
-
-#close_button, #really_upload_button {
+.close_button, #really_upload_button {
   float: right;
 }
 
