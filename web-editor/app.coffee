@@ -17,6 +17,7 @@
 # - should be able to choose different shared colors #1 and #2 in sprite mode
 # - copy and paste should use hover target rather than selected character
 # - bug: try noticing mouseOut in the editor and picking up the brush
+# - be able to export an array for lookup of changeable color to use per character
 
 
 # FEATURES
@@ -760,7 +761,7 @@ $(document).ready () ->
   save_to_local_storage = ->
     save = ( data, name ) ->
       localStorage[ name] = JSON.stringify( data )
-    save  data, 'data'
+    save  character_set.data, 'data'
     save  Color::id_for, 'changeable_colors'
     save  tile_palette.data, 'tile_design_data'
     save  world.data, 'world_data'
@@ -818,7 +819,7 @@ $(document).ready () ->
       when K_X then blank()
       when K_C then copy_from_index = selected_character_code
       when K_V then selected_character().copy_from  copy_from_index
-      when K_T then $('#tile_palette_dialog').fadeIn 'fast'
+      when K_T then $('#tile_palette_dialog').fadeToggle 'fast'
       when K_G then world.choose_tile()
       when K_W then world.pan_view 'up'
       when K_A then world.pan_view 'left'
