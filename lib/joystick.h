@@ -14,11 +14,11 @@
 #define  JOY_RIGHT  3
 #define  JOY_FIRE   4
 
-#define  JOY_BTN_UP(v)     ( 0 == ((v) & (1 << JOY_UP)) )
-#define  JOY_BTN_DOWN(v)   ( 0 == ((v) & (1 << JOY_DOWN)) )
-#define  JOY_BTN_LEFT(v)   ( 0 == ((v) & (1 << JOY_LEFT)) )
-#define  JOY_BTN_RIGHT(v)  ( 0 == ((v) & (1 << JOY_RIGHT)) )
-#define  JOY_BTN_FIRE(v)   ( 0 == ((v) & (1 << JOY_FIRE)) )
+#define  JOY_BTN_UP(v)     ( ((v) & (1 << JOY_UP)) == 0 )
+#define  JOY_BTN_DOWN(v)   ( ((v) & (1 << JOY_DOWN)) == 0 )
+#define  JOY_BTN_LEFT(v)   ( ((v) & (1 << JOY_LEFT)) == 0 )
+#define  JOY_BTN_RIGHT(v)  ( ((v) & (1 << JOY_RIGHT)) == 0 )
+#define  JOY_BTN_FIRE(v)   ( ((v) & (1 << JOY_FIRE)) == 0 )
 
 
 // Provides the current state of Joystick #2
