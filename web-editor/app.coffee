@@ -18,6 +18,8 @@
 # - copy and paste should use hover target rather than selected character
 # - bug: try noticing mouseOut in the editor and picking up the brush
 # - be able to export an array for lookup of changeable color to use per character
+# - performance: maybe instead of watching mouseMove events, watch for mouseEnter and paint if the button is held down
+# - be able to draw directly on to the macro, so that large assemblies of characters can be edited as if they were a single entity
 
 
 # FEATURES
@@ -201,9 +203,12 @@ class Character
 
   constructor: ( @code ) ->
     @canvas = elm 'canvas', width:8*scale, height:8*scale
-    @internal_canvas = elm 'canvas', width:8, height:8
+    @build()
+
+  build: ->
+    @internal_canvas = elm 'canvas', width:mode.entity_width, height:mode.entity_height
     @context = @internal_canvas.getContext '2d'
-    @image_data = @context.createImageData  8, 8
+    @image_data = @context.createImageData  mode.entity_width, mode.entity_height
 
   pixel_at: ( row, column ) ->
     [ address, shift, mask ] = @directions_to  row, column
@@ -612,8 +617,8 @@ class World
       for x in [0..@width-1]
         @paint x, y, 0
 
-    @view_width = 5
-    @view_height = 3
+    @view_width = 8
+    @view_height = 5
     @view_x = 0
     @view_y = 0
     for row in [0..@view_height-1]
@@ -728,6 +733,8 @@ $(document).ready () ->
     mode = MODE[ asset_mode][ color_mode]
 
     character_set.fill_out_data()
+    for c in character_set.characters
+      c.build()
     character_set.render()
     editor.build()
 
