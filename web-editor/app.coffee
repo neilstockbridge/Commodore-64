@@ -1,7 +1,7 @@
 
 # PLAN:
-# - The animated character / sprite should be larger
 # - Reduce clutter: Remove Upload, Download and hires/muco mode selection UI since don't need it all the time
+# - Upload an image and show it behind the sprite frame ( allows hand-drawn sprites to be scanned and used as background similar to Blender)
 # - In Sprite mode, could use the last ( unused) byte of each 64-byte block to store the changeable color
 # + indicate visually on the charset grid which character is selected
 # - mirror, flip
@@ -687,7 +687,7 @@ class Animation
 
   constructor: ->
     # Create the <canvas>, which depends upon the "scale" setting
-    @canvas = elm 'canvas', width:8*scale, height:8*scale
+    @canvas = elm 'canvas', width:24*scale, height:21*scale
     $('#animation_section').append @canvas
     # When the "Frames" field is changed..
     @frames_field = $ '#animation_section input'
@@ -704,7 +704,7 @@ class Animation
   animate: =>
     character = character_set.characters[ @first_frame + @frame]
     if character
-      @canvas.getContext('2d').drawImage character.internal_canvas, 0, 0, @canvas.width, @canvas.height
+      @canvas.getContext('2d').drawImage  character.internal_canvas, 0, 0, @canvas.width, @canvas.height
       @frame += 1
       @frame = 0 if @frames_to_play <= @frame
 
