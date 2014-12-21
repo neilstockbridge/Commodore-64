@@ -1,12 +1,13 @@
 
 # PLAN:
+# - The animated character / sprite should be larger
+# - Reduce clutter: Remove Upload, Download and hires/muco mode selection UI since don't need it all the time
+# - In Sprite mode, could use the last ( unused) byte of each 64-byte block to store the changeable color
 # + indicate visually on the charset grid which character is selected
 # - mirror, flip
 # - In Sprite mode:
 #   - Hi-res overlays
-# - Reduce clutter: Remove Upload, Download and hires/muco mode selection UI since don't need it all the time
 # - Be able to select a sequence of frames for animation such as $6, $7, $8, $7
-# - In Sprite mode, could use the last ( unused) byte of each 64-byte block to store the changeable color
 # - In Character mode, only color IDs 0..7 may be chosen for the changeable color since the MSB of the Color RAM nybble is used to select hi-res character: 0:hi-res, 1:muco
 # - Remember for each character and sprite whether it's intended for display as hi-res or multi-color
 # - copy range of entities
@@ -731,6 +732,10 @@ $(document).ready () ->
         when 'asset' then asset_mode = input.value
         when 'colors' then color_mode = input.value
     mode = MODE[ asset_mode][ color_mode]
+
+    # The map should be shown only in character mode:
+    method = if mode.asset_type is 'sprites' then 'fadeOut' else 'fadeIn'
+    $('#world')[ method] 'fast'
 
     character_set.fill_out_data()
     for c in character_set.characters
