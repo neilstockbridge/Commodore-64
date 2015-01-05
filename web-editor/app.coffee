@@ -536,7 +536,7 @@ class TileDesign
     for row in [0..TileDesign::height-1]
       for column in [0..TileDesign::width-1]
         character = character_set.characters[ @character_code_at  row, column ]
-        @canvas.getContext('2d').drawImage  character.internal_canvas, 8*column, 8*row
+        @canvas.getContext('2d').drawImage  character.internal_canvas, 8*column, 8*row, 8, 8
 
 
 class TilePalette
