@@ -106,7 +106,7 @@ void move_sprite( dx, dy )
 }
 
 
-int main (void)
+int main( void)
 {
   init();
 
