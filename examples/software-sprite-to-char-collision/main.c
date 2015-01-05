@@ -18,6 +18,14 @@
 #define  SPRITE_Y_TOP   50
 #define  SPRITE_X_LEFT  24
 
+#define  MIN_SOLID_CODE  (0x80+' ')
+
+
+int8_t  to_surface; // of ground
+int8_t  to_ceiling;
+int8_t  to_wall_on_left;
+int8_t  to_wall_on_right;
+
 
 void place( code, column, row)
 {
@@ -68,11 +76,13 @@ void move_sprite_on_x( int8_t amount )
 
 void render()
 {
-  uint16_t  pixel_x;
-  uint8_t   pixel_y;
+  uint16_t  left;
+  uint8_t   top;
   uint8_t   center_column;
   uint8_t   row_above;
   uint8_t   row_below;
+  uint16_t  below_left_ofs;
+  uint16_t  above_left_ofs;
 
   // Work out the pixel-granularity co-ordinates within the character matrix
   // ( rather than the visible display) of the pixel in the top-left hand
@@ -80,23 +90,25 @@ void render()
   #define  FINE_SCRL_Y  ( VIC.ctrl1 & 0x7 )
   #define  FINE_SCRL_X  ( VIC.ctrl2 & 0x7 )
   #define  NORM_FINE_Y  3
-  pixel_x = ( ((VIC.spr_hi_x >> 0 & 0x1)<< 8) + VIC.spr0_x) - SPRITE_X_LEFT - FINE_SCRL_X;
-  pixel_y = VIC.spr0_y - SPRITE_Y_TOP + NORM_FINE_Y - FINE_SCRL_Y;
+  left = ( ((VIC.spr_hi_x >> 0 & 0x1)<< 8) + VIC.spr0_x) - SPRITE_X_LEFT - FINE_SCRL_X;
+  top = VIC.spr0_y - SPRITE_Y_TOP + NORM_FINE_Y - FINE_SCRL_Y;
 
   // Show the parameters to the formula
   cputsxy( 1, 21, "fine: $"); cputhex8( FINE_SCRL_X); cputc(','); cputhex8( FINE_SCRL_Y);
   cputsxy( 1, 22, "sprt: $"); cputhex8( VIC.spr0_x); cputc(','); cputhex8( VIC.spr0_y);
-  cputsxy( 1, 23, "cell: $"); cputhex8( pixel_x >> 3); cputc('.'); cputhex8( pixel_x & 0x7); cputc(','); cputhex8( pixel_y >> 3); cputc('.'); cputhex8( pixel_y & 0x7);
+  cputsxy( 1, 23, "cell: $"); cputhex8( left >> 3); cputc('.'); cputhex8( left & 0x7); cputc(','); cputhex8( top >> 3); cputc('.'); cputhex8( top & 0x7);
 
   memset( COLOR_RAM, COLOR_GREEN, 40*20);
   // Find the row of cells within the character matrix immediately below the
   // "feet" of the sprite
-  row_above = pixel_y - 1 >> 3;
+  row_above = top - 1 >> 3;
   // ..and the row immediately above the "head" of the sprite
-  row_below = pixel_y + SPRITE_HEIGHT >> 3;
-  center_column = pixel_x + SPRITE_WIDTH/2 >> 3;
+  row_below = top + SPRITE_HEIGHT >> 3;
+  center_column = left + SPRITE_WIDTH/2 >> 3;
 
   // Show the character matrix cells that will be considered for collision
+  below_left_ofs = 40*row_below + center_column - 1;
+  above_left_ofs = 40*row_above + center_column - 1;
 
   // Cells painted LIGHT BLUE are considered as the ceiling for collision
   // ( cuts a jump short)
@@ -125,6 +137,25 @@ void render()
   // In theory, "row_below - 1" and " - 2" should be checked to prevent
   // sideways movement too although the cycles can be saved if the map contains
   // no crawlspaces 1 or 2 cells in height
+  to_surface = MIN_SOLID_CODE <= CHAR_MATRIX[ below_left_ofs] ||
+               MIN_SOLID_CODE <= CHAR_MATRIX[ below_left_ofs + 1]  ||
+               MIN_SOLID_CODE <= CHAR_MATRIX[ below_left_ofs + 2]
+    ? top + SPRITE_HEIGHT - ( row_below << 3) : -1;
+
+  to_ceiling = MIN_SOLID_CODE <= CHAR_MATRIX[ above_left_ofs] ||
+               MIN_SOLID_CODE <= CHAR_MATRIX[ above_left_ofs + 1]  ||
+               MIN_SOLID_CODE <= CHAR_MATRIX[ above_left_ofs + 2]
+    ? ( row_above + 1 << 3) - top : -1;
+
+  to_wall_on_left = MIN_SOLID_CODE <= CHAR_MATRIX[ below_left_ofs - 40 ]
+    ? ( center_column << 3) - ( left + SPRITE_WIDTH/2 - 8 + 1 ) : -1;
+
+  to_wall_on_right = MIN_SOLID_CODE <= CHAR_MATRIX[ below_left_ofs - 40 + 2 ]
+    ? ( left + SPRITE_WIDTH/2 + 8 ) - ( center_column + 1 << 3) : -1;
+
+  cputsxy( 20, 21, "to_surf: $"); cputhex8( to_surface);
+  cputsxy( 20, 22, "to_wall: $"); cputhex8( to_wall_on_left); cputc(','); cputhex8( to_wall_on_right);
+  cputsxy( 20, 23, "to_ceil: $"); cputhex8( to_ceiling);
 }
 
 
@@ -152,10 +183,10 @@ void init()
     int  i;
     for ( i = 0; i < 8; i += 1)
     {
-      place( 0x80+' ', 4,     4+i   );
-      place( 0x80+' ', 4+8-1, 4+i   );
-      place( 0x80+' ', 4+i,   4     );
-      place( 0x80+' ', 4+i,   4+8-1 );
+      place( MIN_SOLID_CODE, 4,     4+i   );
+      place( MIN_SOLID_CODE, 4+8-1, 4+i   );
+      place( MIN_SOLID_CODE, 4+i,   4     );
+      place( MIN_SOLID_CODE, 4+i,   4+8-1 );
     }
   }
 
