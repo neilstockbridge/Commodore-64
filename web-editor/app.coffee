@@ -1,12 +1,13 @@
 
 # PLAN:
+# - Reduce clutter: Remove Upload, Download and hires/muco mode selection UI since don't need it all the time
+# - Upload an image and show it behind the sprite frame ( allows hand-drawn sprites to be scanned and used as background similar to Blender)
+# - In Sprite mode, could use the last ( unused) byte of each 64-byte block to store the changeable color
 # + indicate visually on the charset grid which character is selected
 # - mirror, flip
 # - In Sprite mode:
 #   - Hi-res overlays
-# - Reduce clutter: Remove Upload, Download and hires/muco mode selection UI since don't need it all the time
 # - Be able to select a sequence of frames for animation such as $6, $7, $8, $7
-# - In Sprite mode, could use the last ( unused) byte of each 64-byte block to store the changeable color
 # - In Character mode, only color IDs 0..7 may be chosen for the changeable color since the MSB of the Color RAM nybble is used to select hi-res character: 0:hi-res, 1:muco
 # - Remember for each character and sprite whether it's intended for display as hi-res or multi-color
 # - copy range of entities
@@ -535,7 +536,7 @@ class TileDesign
     for row in [0..TileDesign::height-1]
       for column in [0..TileDesign::width-1]
         character = character_set.characters[ @character_code_at  row, column ]
-        @canvas.getContext('2d').drawImage  character.internal_canvas, 8*column, 8*row
+        @canvas.getContext('2d').drawImage  character.internal_canvas, 8*column, 8*row, 8, 8
 
 
 class TilePalette
@@ -686,7 +687,7 @@ class Animation
 
   constructor: ->
     # Create the <canvas>, which depends upon the "scale" setting
-    @canvas = elm 'canvas', width:8*scale, height:8*scale
+    @canvas = elm 'canvas', width:24*scale, height:21*scale
     $('#animation_section').append @canvas
     # When the "Frames" field is changed..
     @frames_field = $ '#animation_section input'
@@ -703,7 +704,7 @@ class Animation
   animate: =>
     character = character_set.characters[ @first_frame + @frame]
     if character
-      @canvas.getContext('2d').drawImage character.internal_canvas, 0, 0, @canvas.width, @canvas.height
+      @canvas.getContext('2d').drawImage  character.internal_canvas, 0, 0, @canvas.width, @canvas.height
       @frame += 1
       @frame = 0 if @frames_to_play <= @frame
 
@@ -731,6 +732,10 @@ $(document).ready () ->
         when 'asset' then asset_mode = input.value
         when 'colors' then color_mode = input.value
     mode = MODE[ asset_mode][ color_mode]
+
+    # The map should be shown only in character mode:
+    method = if mode.asset_type is 'sprites' then 'fadeOut' else 'fadeIn'
+    $('#world')[ method] 'fast'
 
     character_set.fill_out_data()
     for c in character_set.characters
