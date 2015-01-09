@@ -1,6 +1,6 @@
 
 .export _ser_init
-.export _ser_putc
+.export _ser_putc = CHROUT
 
 
 ; See http://103.11.126.234/programming/Commodore-64/RS-232.html for a
@@ -26,12 +26,6 @@ _ser_init:
 
   ldx #1
   jmp CHKOUT
-
-
-; A:data
-_ser_putc:
-
-  jmp CHROUT
 
 
 ; A:LF#, X:DEV#, Y:SA
