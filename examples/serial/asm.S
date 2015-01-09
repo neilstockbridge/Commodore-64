@@ -25,9 +25,7 @@ _ser_init:
   jsr OPEN
 
   ldx #1
-  jsr CHKOUT
-
-  rts
+  jmp CHKOUT
 
 
 ; A:data
@@ -37,26 +35,17 @@ _ser_putc:
 
 
 ; A:LF#, X:DEV#, Y:SA
-SETLFS:
-  jmp $ffba
-
+SETLFS = $ffba
 
 ; A:length, X,Y:LO,HI ptr to filename ( or serial params)
-SETNAM:
-  jmp $ffbd
-
+SETNAM = $ffbd
 
 ; X:LF#
-CHKOUT:
-  jmp $ffc9
-
+CHKOUT = $ffc9
 
 ; No params
-OPEN:
-  jmp $ffc0
-
+OPEN = $ffc0
 
 ; A:data
-CHROUT:
-  jmp $ffd2
+CHROUT = $ffd2
 
