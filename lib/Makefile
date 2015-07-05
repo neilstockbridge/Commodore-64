@@ -4,6 +4,8 @@
 
 CFLAGS += -O -I$(LIBDIR)
 
+OUTDIR ?= /tmp/C64
+
 .c.o:
 	cl65 $(CFLAGS) $(LDFLAGS) -c $< -o $@
 
@@ -12,8 +14,8 @@ CFLAGS += -O -I$(LIBDIR)
 
 .SILENT:
 all: $(PARTS)
-	cl65 $(LDFLAGS) -o /tmp/$(PROJECT).prg $(PARTS)
+	cl65 $(LDFLAGS) -o $(OUTDIR)/$(PROJECT).prg $(PARTS)
 
 clean:
-	rm -f *.o *.map /tmp/$(PROJECT).prg
+	rm -f *.o *.map $(OUTDIR)/$(PROJECT).prg
 
