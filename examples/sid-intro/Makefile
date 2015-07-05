@@ -1,7 +1,7 @@
 
 PROJECT = sid-intro
 
-LIBDIR= ../../../lib
+LIBDIR= ../../lib
 
 PARTS = main.o
 
